@@ -21,6 +21,7 @@ import {
   toggleAudio,
   setCustomDeployAmount,
 } from './state.mjs';
+import { colors } from './theme.mjs';
 
 // --- Module-level Variables ---
 let controlsWindow;
@@ -40,7 +41,7 @@ function showDeployAmountPrompt(screen) {
     width: 60,
     height: 9,
     border: 'line',
-    style: { border: { fg: 'yellow' } },
+    style: { border: { fg: colors.YELLOW } },
     label: 'set deploy amount',
     tags: true,
     keys: true,
@@ -62,9 +63,14 @@ function showDeployAmountPrompt(screen) {
     left: 2,
     right: 2,
     height: 1,
-    bg: 'black',
-    fg: 'white',
-    style: { focus: { bg: 'black', fg: 'white' } },
+    bg: colors.BLACK,
+    fg: colors.CREAM,
+    style: {
+      focus: {
+        bg: colors.BLACK,
+        fg: colors.CREAM,
+      },
+    },
     inputOnFocus: true,
   });
 
@@ -101,7 +107,7 @@ function showDeployAmountPrompt(screen) {
     } else {
       // On failure, show an error message
       label.setContent('wtf? enter positive number:');
-      form.style.border.fg = 'red';
+      form.style.border.fg = colors.RED;
       screen.render();
       input.focus();
     }
@@ -125,20 +131,20 @@ function updateControlsWindow() {
   const { appMode, isSpeculating, isAudioEnabled, customDeployAmount } = getState();
 
   // 2. Determine colors and text
-  const modeColor = appMode === APP_MODES.IDLE ? 'red-fg' : 'green-fg';
-  const speculateColor = isSpeculating ? 'green-fg' : 'red-fg';
+  const modeColor = appMode === APP_MODES.IDLE ? `${colors.RED}-fg` : `${colors.GREEN}-fg`;
+  const speculateColor = isSpeculating ? `${colors.GREEN}-fg` : `${colors.RED}-fg`;
   const speculateText = isSpeculating ? 'ON' : 'OFF';
 
-  const audioColor = isAudioEnabled ? 'green-fg' : 'red-fg';
+  const audioColor = isAudioEnabled ? `${colors.GREEN}-fg` : `${colors.RED}-fg`;
   const audioText = isAudioEnabled ? 'ON' : 'OFF';
 
   // 3. Build content string
-  const content = `[{yellow-fg}0{/yellow-fg}] idle | [{yellow-fg}1{/yellow-fg}] ${APP_MODES.ONE_X_EV} | [{yellow-fg}2{/yellow-fg}] ${APP_MODES.THREE_X_EV} | [{yellow-fg}3{/yellow-fg}] ${APP_MODES.FIVE_X_EV}
+  const content = `[{${colors.YELLOW}-fg}0{/${colors.YELLOW}-fg}] idle | [{${colors.YELLOW}-fg}1{/${colors.YELLOW}-fg}] ${APP_MODES.ONE_X_EV} | [{${colors.YELLOW}-fg}2{/${colors.YELLOW}-fg}] ${APP_MODES.THREE_X_EV} | [{${colors.YELLOW}-fg}3{/${colors.YELLOW}-fg}] ${APP_MODES.FIVE_X_EV}
 
-[{yellow-fg}S{/yellow-fg}] spec: {${speculateColor}}${speculateText}{/${speculateColor}} | [{yellow-fg}A{/yellow-fg}] audio: {${audioColor}}${audioText}{/${audioColor}}
-[{yellow-fg}D{/yellow-fg}] deploy: {yellow-fg}${customDeployAmount.toFixed(4)} sol{/yellow-fg}
+[{${colors.YELLOW}-fg}S{/${colors.YELLOW}-fg}] spec: {${speculateColor}}${speculateText}{/${speculateColor}} | [{${colors.YELLOW}-fg}A{/${colors.YELLOW}-fg}] audio: {${audioColor}}${audioText}{/${audioColor}}
+[{${colors.YELLOW}-fg}D{/${colors.YELLOW}-fg}] deploy: {${colors.YELLOW}-fg}${customDeployAmount.toFixed(4)} sol{/${colors.YELLOW}-fg}
 
-mode: {${modeColor}}${appMode}{/} | [{yellow-fg}Q{/yellow-fg}] quit`;
+mode: {${modeColor}}${appMode}{/} | [{${colors.YELLOW}-fg}Q{/${colors.YELLOW}-fg}] quit`;
 
   // 4. Set content
   controlsWindow.setContent(content);
@@ -173,7 +179,7 @@ function createGrid(boardWindow) {
       height: `${boxHeight}%`,
       width: `${boxWidth}%`,
       border: 'line',
-      style: { border: { fg: 'white' } }
+      style: { border: { fg: colors.CREAM } }
     });
 
     // 2b. Create text elements inside the box
@@ -288,9 +294,9 @@ export function initTUI() {
     left: 0,
     width: '60%',
     height: '80%',
-    label: 'Game Board',
+    label: '',
     border: 'line',
-    style: { border: { fg: 'black' } }
+    style: { border: { fg: colors.BLACK } }
   });
 
   const statsWindow = blessed.box({
@@ -299,9 +305,9 @@ export function initTUI() {
     left: '60%',
     width: '40%',
     height: '80%',
-    label: 'Stats',
+    label: 'stats',
     border: 'line',
-    style: { border: { fg: 'yellow' } },
+    style: { border: { fg: colors.YELLOW } },
     tags: true
   });
 
@@ -311,9 +317,9 @@ export function initTUI() {
     left: 0,
     width: '60%',
     height: '20%',
-    label: 'Logs',
+    label: 'logs',
     border: 'line',
-    style: { border: { fg: 'yellow' } },
+    style: { border: { fg: colors.YELLOW } },
     scrollable: true,
     alwaysScroll: true,
     scrollbar: { ch: ' ' },
@@ -326,9 +332,9 @@ export function initTUI() {
     left: '60%',
     width: '40%',
     height: '20%',
-    label: 'Controls',
+    label: 'controls',
     border: 'line',
-    style: { border: { fg: 'yellow' } },
+    style: { border: { fg: colors.YELLOW } },
     tags: true,
     content: 'loading controls...',
   });

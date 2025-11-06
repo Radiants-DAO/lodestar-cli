@@ -15,6 +15,7 @@ import fetch from 'node-fetch';
 import { ORE_TOKEN_ADDRESS, SOL_TOKEN_ADDRESS } from './constants.mjs';
 import { setAppState } from './state.mjs';
 import { log } from './utils.mjs';
+import { colors } from './theme.mjs';
 
 // --- Private Functions ---
 
@@ -62,14 +63,14 @@ export async function updatePrices(tuiWidgets) {
 
   // 2. Update TUI widgets with new prices
   if (oreUsd > 0) {
-    orePriceDisplay.setContent(`ore price: {yellow-fg}$${oreUsd.toFixed(4)}{/yellow-fg}`);
+    orePriceDisplay.setContent(`ore price: {${colors.YELLOW}-fg}$${oreUsd.toFixed(4)}{/${colors.YELLOW}-fg}`);
   }
   if (solUsd > 0) {
-    solPriceDisplay.setContent(`sol price: {yellow-fg}$${solUsd.toFixed(2)}{/yellow-fg}`);
+    solPriceDisplay.setContent(`sol price: {${colors.YELLOW}-fg}$${solUsd.toFixed(2)}{/${colors.YELLOW}-fg}`);
   }
   if (oreUsd > 0 && solUsd > 0) {
     oreSolRatio = oreUsd / solUsd;
-    oreSolRatioDisplay.setContent(`ore/sol: {yellow-fg}${oreSolRatio.toFixed(6)}{/yellow-fg}`);
+    oreSolRatioDisplay.setContent(`ore/sol: {${colors.YELLOW}-fg}${oreSolRatio.toFixed(6)}{/${colors.YELLOW}-fg}`);
   }
 
   // 3. Update the global app state

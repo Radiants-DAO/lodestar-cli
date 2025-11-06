@@ -17,6 +17,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { log } from './utils.mjs';
+import { colors } from './theme.mjs';
 
 // --- Module-level Variables ---
 
@@ -45,8 +46,8 @@ export function loadSigner() {
 
     // 3. Check if the wallet file exists
     if (!fs.existsSync(keypairPath)) {
-      log(`{red-fg}SIGNER NOT FOUND:{/red-fg} could not find keypair at ${keypairPath}`);
-      log('{yellow-fg}please ensure your Solana CLI wallet is set up (run `solana-keygen new`){/yellow-fg}');
+      log(`{${colors.RED}-fg}SIGNER NOT FOUND:{/${colors.RED}-fg} could not find keypair at ${keypairPath}`);
+      log(`{${colors.YELLOW}-fg}please ensure your Solana CLI wallet is set up (run \`solana-keygen new\`){/${colors.YELLOW}-fg}`);
       return null;
     }
 

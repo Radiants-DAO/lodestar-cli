@@ -31,6 +31,7 @@ import { computeEVStarForBlock, getOreValueInSOL, checkPoolDelta } from './ev.mj
 import { runAutomationCheck, resetRoundFlags } from './automation.mjs';
 import { getSigner } from './wallet.mjs';
 import { sendCheckpointTx } from './transactions.mjs';
+import { colors } from './theme.mjs';
 
 // --- Module-level Variables ---
 let tui;
@@ -83,9 +84,9 @@ function updateTUI(roundData) {
 
   // 4. Update Best EV Display
   if (bestEV.id !== -1) {
-    bestEVDisplay.setContent(`best ev: {yellow-fg}#${bestEV.id} (${formatSol(bestEV.ev)} sol){/yellow-fg}`);
+    bestEVDisplay.setContent(`best ev: {${colors.YELLOW}-fg}#${bestEV.id} (${formatSol(bestEV.ev)} sol){/${colors.YELLOW}-fg}`);
   } else {
-    bestEVDisplay.setContent('best ev: {red-fg}n/a (all negative){/red-fg}');
+    bestEVDisplay.setContent(`best ev: {${colors.RED}-fg}n/a (all negative){/${colors.RED}-fg}`);
   }
 
   // 5. Gather All Square Data
@@ -105,7 +106,7 @@ function updateTUI(roundData) {
     countValues[i] = countVal;
 
     // Reset border color
-    gridWidgets[i].box.style.border.fg = 'white';
+    gridWidgets[i].box.style.border.fg = colors.CREAM;
   }
 
   // 6. Calculate and Apply Ratio Highlighting
@@ -113,8 +114,8 @@ function updateTUI(roundData) {
   const top5Best = validRatios.slice(0, 5);
   const top5Worst = validRatios.slice(-5).reverse();
 
-  top5Worst.forEach(r => { gridWidgets[r.id].box.style.border.fg = 'red'; });
-  top5Best.forEach(r => { gridWidgets[r.id].box.style.border.fg = 'yellow'; });
+  top5Worst.forEach(r => { gridWidgets[r.id].box.style.border.fg = colors.RED; });
+  top5Best.forEach(r => { gridWidgets[r.id].box.style.border.fg = colors.YELLOW; });
 
   // 7. Update Individual Grid Widgets and Stats Log
   for (let i = 0; i < 25; i++) {
@@ -129,18 +130,18 @@ function updateTUI(roundData) {
 
     // Set EV value and color
     const evValue = blockEVs[i];
-    let evColor = '{grey-fg}';
-    if (i + 1 === bestEV.id) evColor = '{green-fg}';
-    else if (evValue > 0) evColor = '{blue-fg}';
-    else if (evValue < 0) evColor = '{red-fg}';
+    let evColor = `{${colors.GREY}-fg}`;
+    if (i + 1 === bestEV.id) evColor = `{${colors.GREEN}-fg}`;
+    else if (evValue > 0) evColor = `{${colors.BLUE}-fg}`;
+    else if (evValue < 0) evColor = `{${colors.RED}-fg}`;
 
-    widget.ev.setContent(isFinite(evValue) ? `${evColor}${formatSol(evValue)}{/}` : '{grey-fg}0.0000{/grey-fg}');
+    widget.ev.setContent(isFinite(evValue) ? `${evColor}${formatSol(evValue)}{/}` : `{${colors.GREY}-fg}0.0000{/${colors.GREY}-fg}`);
 
     // Update stats log
     const sq = `#${(i + 1).toString().padStart(2, '0')}`;
-    const pl = `{yellow-fg}p{/yellow-fg}: ${countVal.toString().padEnd(5)}`;
-    const sl = `{yellow-fg}sol{/yellow-fg}: ${solStr.padEnd(10)}`;
-    const rt = `{yellow-fg}ratio{/yellow-fg}: ${ratio}`;
+    const pl = `{${colors.YELLOW}-fg}p{/${colors.YELLOW}-fg}: ${countVal.toString().padEnd(5)}`;
+    const sl = `{${colors.YELLOW}-fg}sol{/${colors.YELLOW}-fg}: ${solStr.padEnd(10)}`;
+    const rt = `{${colors.YELLOW}-fg}ratio{/${colors.YELLOW}-fg}: ${ratio}`;
     statsLog.log(`${sq} | ${pl} | ${sl} | ${rt}`);
   }
 
@@ -171,7 +172,7 @@ function displayWinner(roundData, roundIdStr) {
     });
 
     // 4. Update TUI
-    lastWinnerDisplay.setContent(`last winner: {green-fg}#${winnerStr}{/green-fg}`);
+    lastWinnerDisplay.setContent(`last winner: {${colors.GREEN}-fg}#${winnerStr}{/${colors.GREEN}-fg}`);
     countdownTimer.setContent(`waiting...`);
 
     // 5. Log and play sound
@@ -215,7 +216,7 @@ export async function updateCountdown() {
       const secondsRemaining = Math.floor(slotsRemaining * (MS_PER_SLOT / 1000));
       const mm = String(Math.floor(secondsRemaining / 60)).padStart(2, '0');
       const ss = String(secondsRemaining % 60).padStart(2, '0');
-      countdownString = `{yellow-fg}round ends in: ${mm}:${ss}{/yellow-fg}`;
+      countdownString = `{${colors.YELLOW}-fg}round ends in: ${mm}:${ss}{/${colors.YELLOW}-fg}`;
 
       setAppState({ winnerAnnounced: false });
 
@@ -234,7 +235,7 @@ export async function updateCountdown() {
         countdownString = countdownTimer.content;
       } else {
         // 4b. Hash not yet populated, re-check account
-        countdownString = '{red-fg}round ended. calculating winner...{/red-fg}';
+        countdownString = `{${colors.GREY}-fg}waiting for next round...{/${colors.GREY}-fg}`;
 
         if (currentRoundId.gtn(-1)) {
           try {
@@ -257,7 +258,7 @@ export async function updateCountdown() {
     }
   } catch (e) {
     // 5. Handle RPC error
-    countdownString = '{red-fg}Error fetching slot...{/red-fg}';
+    countdownString = `{${colors.RED}-fg}error fetching slot...{/${colors.RED}-fg}`;
   }
 
   // 6. Update TUI
