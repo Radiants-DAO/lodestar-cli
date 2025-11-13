@@ -54,7 +54,7 @@ export function log(message) {
  * This is for unrecoverable errors, typically during transactions.
  * @param {Error} error - The error object.
  */
-export function handleFatalError(error) {
+export function handleFatalError(error, chainLogs = '') {
   // 1. Destroy TUI to return to a clean console
   if (screen) {
     screen.destroy();
@@ -72,6 +72,9 @@ export function handleFatalError(error) {
 
   console.error('\n--- FULL STACK TRACE ---');
   console.error(error.stack);
+
+  console.error('\n--- ON CHAIN ---');
+  console.error(chainLogs);
 
   // 3. Exit the process
   process.exit(1);

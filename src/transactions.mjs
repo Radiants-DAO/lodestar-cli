@@ -36,6 +36,7 @@ import {
   getAutomationPda,
   getTreasuryPda,
   parseMiner,
+  parseRound,
 } from './solana.mjs';
 
 // --- Private Helper Functions ---
@@ -157,6 +158,17 @@ export async function sendDeployTx(targets, connection, signer) {
       return;
     }
 
+    let roundData;
+    try {
+      roundData = parseRound(newRoundAccountInfo.data);
+      if (roundData.total_deployed === undefined) {
+         throw new Error('Parsed data is malformed.');
+      }
+    } catch (parseErr) {
+       log(`deploy skipped: round ${currentRoundId.toString()} account found but not initialized. Waiting for next tick.`);
+       return;
+    }
+
     // 3. Fetch Miner State (to check for checkpoint need)
     const minerPda = getMinerPda(authority);
     const minerAccountInfo = await connection.getAccountInfo(minerPda);
@@ -261,6 +273,22 @@ export async function sendDeployTx(targets, connection, signer) {
 
     log(`deploy successful! signature: ${signature.slice(0, 16)}...`);
   } catch (e) {
-    handleFatalError(e);
+    let logs;
+    try {
+      // Try to parse the signature from the error message
+      const sigMatch = e.message.match(/Transaction ([a-zA-Z0-9]{87,88})/);
+      if (sigMatch && sigMatch[1]) {
+        const signature = sigMatch[1];
+
+        // Give the RPC a second to catch up
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        logs = await connection.getLogs(signature, 'confirmed');
+      }
+    } catch (logError) {
+      log(`error fetching logs: ${logError.message}`);
+    }
+
+    handleFatalError(e, logs);
   }
 }
