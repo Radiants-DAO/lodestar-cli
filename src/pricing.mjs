@@ -83,7 +83,7 @@ export async function updateMinerStats(connection, signer, tuiWidgets) {
       const { userBalance } = getState();
 
       if (botBalanceDisplay) 
-        botBalanceDisplay.setContent(`   bot wallet: {${colors.GREEN}-fg}${userBalance.toFixed(4)} SOL{/}`);
+        botBalanceDisplay.setContent(`   bot wallet: {${colors.GREEN}-fg}${userBalance.toFixed(4)}{/}`);
       
       if (claimableSolDisplay) 
         claimableSolDisplay.setContent(`claimable sol: {${colors.YELLOW}-fg}${rewardsSol.toFixed(4)}{/}`);

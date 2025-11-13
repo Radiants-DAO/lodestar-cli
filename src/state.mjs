@@ -88,8 +88,8 @@ export function setAppMode(mode) {
 }
 
 /**
- * Toggles the speculation (dry run) mode.
- * @returns {boolean} The new speculation state.
+ * Toggles the spectation (dry run) mode.
+ * @returns {boolean} The new spectation state.
  */
 export function toggleSpeculate() {
   appState.isSpeculating = !appState.isSpeculating;

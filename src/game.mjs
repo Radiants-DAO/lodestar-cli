@@ -139,9 +139,9 @@ function updateTUI(roundData) {
     widget.ev.setContent(isFinite(evValue) ? `${evColor}${formatSol(evValue)}{/}` : `{${colors.GREY}-fg}0.0000{/${colors.GREY}-fg}`);
 
     // Update stats log
-    const sq = `#${(i + 1).toString().padStart(2, '0')}`;
-    const pl = `{${colors.YELLOW}-fg}p{/${colors.YELLOW}-fg}: ${countVal.toString().padEnd(5)}`;
-    const sl = `{${colors.YELLOW}-fg}sol{/${colors.YELLOW}-fg}: ${solStr.padEnd(10)}`;
+    const sq = ` #${(i + 1).toString().padStart(2, '0')}`;
+    const pl = `{${colors.YELLOW}-fg}p{/${colors.YELLOW}-fg}: ${countVal.toString().padEnd(3)} `;
+    const sl = `{${colors.YELLOW}-fg}sol{/${colors.YELLOW}-fg}: ${solStr} `;
     const rt = `{${colors.YELLOW}-fg}ratio{/${colors.YELLOW}-fg}: ${ratio}`;
     statsLog.log(`${sq} | ${pl} | ${sl} | ${rt}`);
   }
@@ -214,7 +214,8 @@ export async function updateCountdown() {
     // 3. Handle Active Round (slotsRemaining > 0)
     if (slotsRemaining > 0) {
       const secondsRemaining = Math.floor(slotsRemaining * (MS_PER_SLOT / 1000));
-      const mm = String(Math.floor(secondsRemaining / 60)).padStart(2, '0');
+      let mm = String(Math.floor(secondsRemaining / 60)).padStart(2, '0');
+      if (mm > 1) mm = 1;
       const ss = String(secondsRemaining % 60).padStart(2, '0');
       countdownString = `{${colors.YELLOW}-fg}round ends in: ${mm}:${ss}{/${colors.YELLOW}-fg}`;
 
