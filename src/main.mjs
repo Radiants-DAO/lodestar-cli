@@ -24,7 +24,7 @@ console.warn = (...args) => {
 
 // --- Imports ---
 import { initTUI } from './tui.mjs';
-import { setUtilWidgets, log, startDonationLoop } from './utils.mjs';
+import { setUtilWidgets, log } from './utils.mjs';
 import { initConnection } from './solana.mjs';
 import { updatePrices } from './pricing.mjs';
 import { updateCountdown, startGameLoop } from './game.mjs';
@@ -40,7 +40,6 @@ async function main() {
   const tuiWidgets = initTUI();
   const { screen, logWindow } = tuiWidgets;
   setUtilWidgets({ logWindow, screen }); // Injects TUI widgets for global logging
-  startDonationLoop(); // Start the donation reminders
 
   // 2. Setup Solana Connection & Wallet
   const connection = initConnection();

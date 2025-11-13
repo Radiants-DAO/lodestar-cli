@@ -47,52 +47,6 @@ export function log(message) {
   }
 }
 
-// --- Donation Loop ---
-
-const DONATION_WALLET_ADDRESS = 'oREVE663st4oVqRp31TdEKdjqUYmZkJ3Vofi1zEAPro';
-
-const DONATION_MESSAGES = [
-  `the dev is poorer than you, donate: ${DONATION_WALLET_ADDRESS}`,
-  `please donate before all sanity is lost: ${DONATION_WALLET_ADDRESS}`,
-  `this free software helped? donate: ${DONATION_WALLET_ADDRESS}`,
-  `donations: ${DONATION_WALLET_ADDRESS}`,
-];
-
-// Set min/max time between messages (in milliseconds)
-const MIN_DONATION_INTERVAL_MS = 1 * 60 * 1000; // 1 minute
-const MAX_DONATION_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
-
-/**
- * Gets a random timeout duration.
- * @returns {number}
- */
-function getRandomTimeout() {
-  return Math.floor(Math.random() * (MAX_DONATION_INTERVAL_MS - MIN_DONATION_INTERVAL_MS + 1)) + MIN_DONATION_INTERVAL_MS;
-}
-
-/**
- * Picks a random message and logs it, then schedules the next message.
- */
-function showDonationMessage() {
-  // 1. Pick a random message
-  const randomIndex = Math.floor(Math.random() * DONATION_MESSAGES.length);
-  const message = DONATION_MESSAGES[randomIndex];
-
-  // 2. Log it
-  log(message);
-
-  // 3. Schedule the next one
-  setTimeout(showDonationMessage, getRandomTimeout());
-}
-
-/**
- * Kicks off the recurring, randomized donation message loop.
- */
-export function startDonationLoop() {
-  // Start the first loop after a short, random delay
-  setTimeout(showDonationMessage, getRandomTimeout() / 2);
-}
-
 // --- Error Handling ---
 
 /**

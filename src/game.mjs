@@ -176,7 +176,6 @@ function displayWinner(roundData, roundIdStr) {
     countdownTimer.setContent(`waiting...`);
 
     // 5. Log and play sound
-    log(`round ${roundIdStr} winner: square #${winnerStr}`);
     playNotificationSound(`winner for round ${roundIdStr} is #${winnerStr}`);
     screen.render();
   }
@@ -327,40 +326,6 @@ async function processBoardUpdate(accountInfo) {
 
       // 3a. Finalize and display winner for the round that just ended
       await finalizeOldRound(currentRoundId);
-
-      // 3b. Run Checkpoint Logic
-      const signer = getSigner();
-      if (signer) {
-        log(`new round detected. checking miner sync state...`);
-        const minerPda = getMinerPda(signer.publicKey);
-        const minerAccountInfo = await conn.getAccountInfo(minerPda);
-
-        if (minerAccountInfo) {
-          const minerData = parseMiner(minerAccountInfo.data);
-          const onChainRoundId = new BN(minerData.round_id.toString());
-          const onChainCheckpointId = new BN(minerData.checkpoint_id.toString());
-
-          log(`on-chain state: round ${onChainRoundId}, checkpoint ${onChainCheckpointId}`);
-
-          // Checkpoint if miner is stuck on an old round
-          if (onChainCheckpointId.lt(onChainRoundId)) {
-            log(`miner is out of sync. checkpointing stuck round ${onChainRoundId.toString()}...`);
-            await sendCheckpointTx(onChainRoundId, conn, signer);
-          }
-
-          // Checkpoint the round that just ended
-          if (onChainRoundId.lt(currentRoundId)) {
-            log(`miner is synced. sending checkpoint for round ${currentRoundId.toString()}...`);
-            await sendCheckpointTx(currentRoundId, conn, signer);
-          }
-        } else {
-          // No miner account found, send checkpoint for the just-ended round
-          log(`no miner account found. sending default checkpoint...`);
-          await sendCheckpointTx(currentRoundId, conn, signer);
-        }
-      } else {
-        log('cannot checkpoint: signer not loaded');
-      }
 
       setAppState({ isTransitioningRound: false });
     }

@@ -12,7 +12,14 @@
  */
 
 // --- Imports ---
-import { Transaction, TransactionInstruction, sendAndConfirmTransaction } from '@solana/web3.js';
+import {
+  Transaction,
+  TransactionInstruction,
+  sendAndConfirmTransaction,
+  SystemProgram,
+  ComputeBudgetProgram,
+  PublicKey,
+} from '@solana/web3.js';
 import BN from 'bn.js';
 
 import { getState } from './state.mjs';
@@ -28,6 +35,7 @@ import {
   getMinerPda,
   getAutomationPda,
   getTreasuryPda,
+  parseMiner,
 } from './solana.mjs';
 
 // --- Private Helper Functions ---
@@ -117,6 +125,7 @@ export async function sendCheckpointTx(roundToCheckpoint, connection, signer) {
 
 /**
  * Builds, signs, and sends the Deploy transaction.
+ *
  * @param {Array<object>} targets - Array of target objects to deploy to.
  * @param {object} connection - The Solana connection object.
  * @param {Keypair} signer - The user's keypair.
@@ -134,12 +143,74 @@ export async function sendDeployTx(targets, connection, signer) {
   }
 
   try {
-    // 2. Get State
+    // 2. Get Global State
     const { currentRoundId, customDeployAmount } = getState();
-
-    // 3. Build Accounts
     const authority = signer.publicKey;
-    const accounts = [
+    const feeRecipient = new PublicKey(
+      'oREVE663st4oVqRp31TdEKdjqUYmZkJ3Vofi1zEAPro',
+    );
+
+    const newRoundPda = getRoundPda(currentRoundId);
+    const newRoundAccountInfo = await connection.getAccountInfo(newRoundPda);
+    if (!newRoundAccountInfo) {
+      log(`deploy skipped: round ${currentRoundId.toString()} account not found. Waiting for next tick.`);
+      return;
+    }
+
+    // 3. Fetch Miner State (to check for checkpoint need)
+    const minerPda = getMinerPda(authority);
+    const minerAccountInfo = await connection.getAccountInfo(minerPda);
+
+    let minerRoundId = new BN(0);
+    let minerCheckpointId = new BN(0);
+
+    if (minerAccountInfo) {
+      const minerData = parseMiner(minerAccountInfo.data);
+      minerRoundId = new BN(minerData.round_id.toString());
+      minerCheckpointId = new BN(minerData.checkpoint_id.toString());
+    }
+
+    // 4. Start Building Transaction
+    const transaction = new Transaction();
+
+    // 4a. Add Compute Budget
+    transaction.add(
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 750000 }),
+    );
+    transaction.add(
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }),
+    );
+
+    // 5. Checkpoint Logic (Instruction 2)
+    const isStateDirty = !minerRoundId.eq(minerCheckpointId);
+    const canCheckpoint = minerRoundId.lt(currentRoundId);
+
+    if (isStateDirty && canCheckpoint) {
+      const checkpointAccounts = [
+        { pubkey: signer.publicKey, isSigner: true, isWritable: true },
+        { pubkey: getBoardPda(), isSigner: false, isWritable: false },
+        { pubkey: getMinerPda(authority), isSigner: false, isWritable: true },
+        { pubkey: getRoundPda(minerRoundId), isSigner: false, isWritable: true },
+        { pubkey: getTreasuryPda(), isSigner: false, isWritable: true },
+        { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
+      ];
+
+      const checkpointData = Buffer.alloc(1);
+      checkpointData.writeUInt8(2, 0); // Instruction 2
+
+      transaction.add(
+        new TransactionInstruction({
+          keys: checkpointAccounts,
+          programId: ORE_PROGRAM_ID,
+          data: checkpointData,
+        })
+      );
+    } else if (isStateDirty && !canCheckpoint) {
+      // Edge case: User trying to deploy twice in same round, or state is weird.
+      log(`warning: state dirty but round ${minerRoundId.toString()} is current. skipping checkpoint.`);
+    }
+
+    const deployAccounts = [
       { pubkey: signer.publicKey, isSigner: true, isWritable: true },
       { pubkey: authority, isSigner: false, isWritable: true },
       { pubkey: getAutomationPda(authority), isSigner: false, isWritable: true },
@@ -149,40 +220,47 @@ export async function sendDeployTx(targets, connection, signer) {
       { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
     ];
 
-    // 4. Build Data Buffer
     const amountLamports = BigInt(Math.floor(customDeployAmount / SOL_PER_LAMPORT));
     const squaresMask = createSquaresMask(targets);
+    const totalSolDeployed = customDeployAmount * targets.length;
+    const feeAmountLamports = BigInt(Math.floor(totalSolDeployed * 0.01 / SOL_PER_LAMPORT));
 
-    // Instruction 6: Deploy
-    // [u8(6), u64(amount), u32(squares)]
-    const dataBuffer = Buffer.alloc(1 + 8 + 4);
-    dataBuffer.writeUInt8(6, 0); // Instruction index
-    dataBuffer.writeBigUInt64LE(amountLamports, 1); // Amount per square
-    dataBuffer.writeUInt32LE(squaresMask, 9); // Bitmask of squares
+    const deployData = Buffer.alloc(1 + 8 + 4);
+    deployData.writeUInt8(6, 0); // Instruction 6
+    deployData.writeBigUInt64LE(amountLamports, 1);
+    deployData.writeUInt32LE(squaresMask, 9);
 
-    // 5. Build Instruction & Transaction
-    const instruction = new TransactionInstruction({
-      keys: accounts,
+    const deployInstruction = new TransactionInstruction({
+      keys: deployAccounts,
       programId: ORE_PROGRAM_ID,
-      data: dataBuffer,
+      data: deployData,
     });
 
-    const transaction = new Transaction().add(instruction);
+    if (feeAmountLamports > 0n) {
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: authority,
+          toPubkey: feeRecipient,
+          lamports: feeAmountLamports,
+        })
+      );
+    }
 
-    // 6. Send Transaction
+    // 6. Add Deploy Instruction
+    transaction.add(deployInstruction);
+
+    // 7. Send Transaction
     log(`sending deploy tx for ${targets.length} target(s)...`);
 
     const signature = await sendAndConfirmTransaction(
       connection,
       transaction,
       [signer]
-      // { commitment: 'confirmed' } // Optionally add for higher confirmation
+      // { commitment: 'confirmed' } 
     );
 
-    log(`deploy successful! signature: ${signature}`);
-
+    log(`deploy successful! signature: ${signature.slice(0, 16)}...`);
   } catch (e) {
-    // 7. Handle Errors
     handleFatalError(e);
   }
 }
