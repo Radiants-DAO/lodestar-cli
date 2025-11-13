@@ -247,6 +247,7 @@ function updateControlsWindow() {
 
   // 3. Build content string
   const content = `[{${colors.YELLOW}-fg}0{/${colors.YELLOW}-fg}] idle | [{${colors.YELLOW}-fg}1{/${colors.YELLOW}-fg}] ${APP_MODES.ONE_X_EV} | [{${colors.YELLOW}-fg}2{/${colors.YELLOW}-fg}] ${APP_MODES.THREE_X_EV} | [{${colors.YELLOW}-fg}3{/${colors.YELLOW}-fg}] ${APP_MODES.FIVE_X_EV}
+[{${colors.YELLOW}-fg}4{/${colors.YELLOW}-fg}] ${APP_MODES.TWENTY_FIVE_X_EV}
 
 [{${colors.YELLOW}-fg}S{/${colors.YELLOW}-fg}] spec: {${speculateColor}}${speculateText}{/${speculateColor}} | [{${colors.YELLOW}-fg}A{/${colors.YELLOW}-fg}] audio: {${audioColor}}${audioText}{/${audioColor}}
 [{${colors.YELLOW}-fg}D{/${colors.YELLOW}-fg}] deploy: {${colors.YELLOW}-fg}${customDeployAmount.toFixed(4)} sol{/${colors.YELLOW}-fg} | [{${colors.YELLOW}-fg}C{/${colors.YELLOW}-fg}] cash out
@@ -357,6 +358,9 @@ function setupKeyListeners(screen) {
         break;
       case '3':
         modeUpdated = setAppMode(APP_MODES.FIVE_X_EV);
+        break;
+      case '4':
+        modeUpdated = setAppMode(APP_MODES.TWENTY_FIVE_X_EV);
         break;
       case 's':
         toggleSpeculate();

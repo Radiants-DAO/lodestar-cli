@@ -40,6 +40,7 @@ export const APP_MODES = {
   ONE_X_EV: '1x EV',
   THREE_X_EV: '3x EV',
   FIVE_X_EV: '5x EV',
+  TWENTY_FIVE_X_EV: '25x EV',
 };
 export const DELTA_THRESHOLD_SOL = 0.6; // SOL difference to trigger pool delta alert
 

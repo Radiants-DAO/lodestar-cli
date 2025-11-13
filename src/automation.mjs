@@ -87,6 +87,9 @@ export function runAutomationCheck(roundData, secondsRemaining, connection, sign
     case APP_MODES.FIVE_X_EV:
       targets = analysis.byEV.slice(0, 5);
       break;
+    case APP_MODES.TWENTY_FIVE_X_EV:
+      targets = analysis.byEV.slice(0, 25);
+      break;
   }
 
   if (targets.length === 0) {
