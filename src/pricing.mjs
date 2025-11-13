@@ -12,10 +12,11 @@
 
 // --- Imports ---
 import fetch from 'node-fetch';
-import { ORE_TOKEN_ADDRESS, SOL_TOKEN_ADDRESS } from './constants.mjs';
-import { setAppState } from './state.mjs';
+import { ORE_TOKEN_ADDRESS, SOL_TOKEN_ADDRESS, SOL_PER_LAMPORT } from './constants.mjs';
+import { getState, setAppState } from './state.mjs';
 import { log } from './utils.mjs';
 import { colors } from './theme.mjs';
+import { getMinerPda, parseMiner } from './solana.mjs';
 
 // --- Private Functions ---
 
@@ -45,14 +46,69 @@ async function fetchPrice(tokenAddress) {
   return 0;
 }
 
+export async function updateMinerStats(connection, signer, tuiWidgets) {
+  if (!signer) return;
+
+  try {
+    const minerPda = getMinerPda(signer.publicKey);
+    const accountInfo = await connection.getAccountInfo(minerPda);
+
+    if (accountInfo) {
+      const minerData = parseMiner(accountInfo.data);
+
+      // 1. Parse Values (BigInt -> Number/String)
+      const rewardsSol = Number(minerData.rewards_sol) * SOL_PER_LAMPORT;
+      
+      // ORE uses 11 decimals
+      const ORE_DIVISOR = 100_000_000_000;
+      
+      const rewardsOre = Number(minerData.rewards_ore) / ORE_DIVISOR;
+      const refinedOre = Number(minerData.refined_ore) / ORE_DIVISOR;
+
+      // 2. Update State
+      setAppState({
+        minerRewardsSol: rewardsSol,
+        minerRewardsOre: rewardsOre,
+        minerRefinedOre: refinedOre,
+      });
+
+      // 3. Update TUI Widgets
+      const { 
+        botBalanceDisplay, 
+        claimableSolDisplay, 
+        claimableOreDisplay, 
+        refinedOreDisplay 
+      } = tuiWidgets;
+      
+      const { userBalance } = getState();
+
+      if (botBalanceDisplay) 
+        botBalanceDisplay.setContent(`bot wallet: {${colors.GREEN}-fg}${userBalance.toFixed(4)} SOL{/}`);
+      
+      if (claimableSolDisplay) 
+        claimableSolDisplay.setContent(`claimable sol: {${colors.YELLOW}-fg}${rewardsSol.toFixed(4)}{/}`);
+      
+      if (claimableOreDisplay) 
+        claimableOreDisplay.setContent(`unrefined ore: {${colors.YELLOW}-fg}${rewardsOre.toFixed(4)}{/}`);
+      
+      if (refinedOreDisplay) 
+        refinedOreDisplay.setContent(`refined ore: {${colors.BLUE}-fg}${refinedOre.toFixed(4)}{/}`);
+    }
+  } catch (e) {
+    log(`error updating miner stats: ${e.message}`);
+  }
+}
+
 // --- Public Functions ---
 
 /**
  * Updates all token prices, calculates the ORE/SOL ratio, and updates the TUI.
  * This function is called on startup and then on a set interval.
+ * @param {Connection} connection - The Solana connection object.
+ * @param {Keypair} signer - The user's loaded keypair.
  * @param {object} tuiWidgets - The object containing all TUI widgets.
  */
-export async function updatePrices(tuiWidgets) {
+export async function updatePrices(connection, signer, tuiWidgets) {
   const { orePriceDisplay, solPriceDisplay, oreSolRatioDisplay, screen } = tuiWidgets;
 
   // 1. Fetch prices from the API
@@ -80,6 +136,9 @@ export async function updatePrices(tuiWidgets) {
     priceOreSol: oreSolRatio,
   });
 
-  // 4. Render the screen
+  // 4. Fetch Miner Stats
+  await updateMinerStats(connection, signer, tuiWidgets);
+
+  // 5. Render the screen
   screen.render();
 }

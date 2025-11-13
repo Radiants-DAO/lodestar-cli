@@ -22,11 +22,119 @@ import {
   setCustomDeployAmount,
 } from './state.mjs';
 import { colors } from './theme.mjs';
+import { log } from './utils.mjs';
+import { getSigner } from './wallet.mjs';
+import { getConnection } from './solana.mjs';
+import { executeFullCashOut } from './transactions.mjs';
 
 // --- Module-level Variables ---
 let controlsWindow;
 
 // --- TUI Components ---
+
+/**
+ * Creates a popup prompt for Cash Out (entering destination address).
+ * @param {blessed.screen} screen - The main blessed screen.
+ */
+function showCashOutPrompt(screen) {
+  // 1. Create the Form
+  const form = blessed.form({
+    parent: screen,
+    top: 'center',
+    left: 'center',
+    width: 60,
+    height: 9,
+    border: 'line',
+    style: { border: { fg: colors.GREEN } }, // Green for Money/Cash out
+    label: ' cash out ',
+    tags: true,
+    keys: true,
+  });
+
+  // 2. Create the Label
+  const label = blessed.text({
+    parent: form,
+    top: 1,
+    left: 2,
+    content: 'destination address (right click to paste):',
+  });
+
+  // 3. Create the Text Input
+  const input = blessed.textbox({
+    parent: form,
+    name: 'address',
+    top: 3,
+    left: 2,
+    right: 2,
+    height: 1,
+    bg: colors.BLACK,
+    fg: colors.CREAM,
+    style: {
+      focus: {
+        bg: colors.BLACK,
+        fg: colors.CREAM,
+      },
+    },
+    inputOnFocus: true,
+  });
+
+  // 4. Add Help Text
+  blessed.text({
+    parent: form,
+    bottom: 1,
+    left: 2,
+    tags: true,
+    content: '(enter = confirm, esc = cancel)',
+  });
+
+  // 5. Append to screen and focus
+  screen.append(form);
+  input.focus();
+  screen.render();
+
+  // 6. Event Listeners
+  input.on('submit', () => form.submit());
+  input.on('cancel', () => form.cancel());
+
+  form.on('submit', async (data) => {
+    const address = data.address.trim();
+    
+    // Basic validation (Solana addresses are usually 32-44 chars)
+    if (address.length >= 32 && address.length <= 44) {
+      log(`{${colors.GREEN}-fg}CASH OUT INITIATED{/${colors.GREEN}-fg}`);
+      log(`Destination Wallet: ${address}`);
+
+      // 1. Set to IDLE mode to stop all new bets
+      log('switching to IDLE mode...');
+      setAppMode(APP_MODES.IDLE);
+      updateControlsWindow(); // Update controls UI to show IDLE
+      screen.render();
+
+      // 2. Get connection and signer
+      const connection = getConnection();
+      const signer = getSigner();
+      
+      if (connection && signer) {
+        // 3. Run the full sequence (don't await, so UI closes)
+        executeFullCashOut(address, connection, signer);
+      } else {
+        log('cash out ERROR: connection or signer not found');
+      }
+
+      form.destroy();
+    } else {
+      label.setContent('invalid address. try again:');
+      form.style.border.fg = colors.RED;
+      screen.render();
+      input.focus();
+    }
+  });
+
+  form.on('cancel', () => {
+    form.destroy();
+    screen.render();
+  });
+}
 
 /**
  * Creates a popup prompt for setting the deploy amount.
@@ -134,7 +242,6 @@ function updateControlsWindow() {
   const modeColor = appMode === APP_MODES.IDLE ? `${colors.RED}-fg` : `${colors.GREEN}-fg`;
   const speculateColor = isSpeculating ? `${colors.GREEN}-fg` : `${colors.RED}-fg`;
   const speculateText = isSpeculating ? 'ON' : 'OFF';
-
   const audioColor = isAudioEnabled ? `${colors.GREEN}-fg` : `${colors.RED}-fg`;
   const audioText = isAudioEnabled ? 'ON' : 'OFF';
 
@@ -142,7 +249,7 @@ function updateControlsWindow() {
   const content = `[{${colors.YELLOW}-fg}0{/${colors.YELLOW}-fg}] idle | [{${colors.YELLOW}-fg}1{/${colors.YELLOW}-fg}] ${APP_MODES.ONE_X_EV} | [{${colors.YELLOW}-fg}2{/${colors.YELLOW}-fg}] ${APP_MODES.THREE_X_EV} | [{${colors.YELLOW}-fg}3{/${colors.YELLOW}-fg}] ${APP_MODES.FIVE_X_EV}
 
 [{${colors.YELLOW}-fg}S{/${colors.YELLOW}-fg}] spec: {${speculateColor}}${speculateText}{/${speculateColor}} | [{${colors.YELLOW}-fg}A{/${colors.YELLOW}-fg}] audio: {${audioColor}}${audioText}{/${audioColor}}
-[{${colors.YELLOW}-fg}D{/${colors.YELLOW}-fg}] deploy: {${colors.YELLOW}-fg}${customDeployAmount.toFixed(4)} sol{/${colors.YELLOW}-fg}
+[{${colors.YELLOW}-fg}D{/${colors.YELLOW}-fg}] deploy: {${colors.YELLOW}-fg}${customDeployAmount.toFixed(4)} sol{/${colors.YELLOW}-fg} | [{${colors.YELLOW}-fg}C{/${colors.YELLOW}-fg}] cash out
 
 mode: {${modeColor}}${appMode}{/} | [{${colors.YELLOW}-fg}Q{/${colors.YELLOW}-fg}] quit`;
 
@@ -262,6 +369,9 @@ function setupKeyListeners(screen) {
       case 'd':
         showDeployAmountPrompt(screen);
         break;
+      case 'c':
+        showCashOutPrompt(screen);
+        break;
     }
 
     // 4. Re-render if state changed
@@ -360,6 +470,41 @@ export function initTUI() {
   });
 
   widgetTop++; // Add a spacer line
+
+  const botBalanceDisplay = blessed.text({
+    parent: statsWindow,
+    top: widgetTop++,
+    left: 1,
+    content: 'bot wallet: loading...',
+    tags: true
+  });
+
+  const claimableSolDisplay = blessed.text({
+    parent: statsWindow,
+    top: widgetTop++,
+    left: 1,
+    content: 'claimable sol: 0.0000',
+    tags: true
+  });
+  
+  const claimableOreDisplay = blessed.text({
+    parent: statsWindow,
+    top: widgetTop++,
+    left: 1,
+    content: 'unrefined ore: 0.0000',
+    tags: true
+  });
+
+  const refinedOreDisplay = blessed.text({
+    parent: statsWindow,
+    top: widgetTop++,
+    left: 1,
+    content: 'refined ore: 0.0000',
+    tags: true
+  });
+
+  widgetTop++; // Spacer
+
   const orePriceDisplay = blessed.text({
     parent: statsWindow,
     top: widgetTop++,
@@ -433,6 +578,10 @@ export function initTUI() {
     controlsWindow,
     countdownTimer,
     lastWinnerDisplay,
+    botBalanceDisplay,
+    claimableSolDisplay,
+    claimableOreDisplay,
+    refinedOreDisplay,
     orePriceDisplay,
     solPriceDisplay,
     oreSolRatioDisplay,

@@ -2,76 +2,154 @@
  * @file wallet.mjs
  * @author Tamwood Technology @tamwoodtech
  * @org Radiants @RadiantsDAO
- * @description Securely loads the user's Solana CLI keypair.
- * This module is responsible for finding and reading the default
- * Solana CLI `id.json` file from the user's home directory
- * (`~/.config/solana/id.json`) to load the signer keypair
- * for sending transactions.
+ * @description Manages the local wallet lifecycle.
+ * Checks for a local `id.json` keypair. If missing, generates one,
+ * saves it, and prompts the user to fund it. If present, validates
+ * the balance before allowing the app to start.
  * @project lodestar-cli
  * @license MIT
  */
 
 // --- Imports ---
-import { Keypair } from '@solana/web3.js';
+import { Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import { log } from './utils.mjs';
 import { colors } from './theme.mjs';
+import { setAppState } from './state.mjs';
 
 // --- Module-level Variables ---
-
-/**
- * Caches the loaded signer keypair so we don't read the file system repeatedly.
- * @type {Keypair | null}
- */
 let signerKeypair = null;
 
 // --- Public Functions ---
 
 /**
- * Loads the default Solana CLI keypair from ~/.config/solana/id.json
- * This function is memoized; it will only load the keypair on the first call.
- * @returns {Keypair | null} The loaded keypair or null if not found.
+ * Loads the signer from the current directory or creates it if missing.
+ * Also performs a strict balance check (on-boarding flow).
+ * @param {Connection} connection - The Solana connection object (needed for balance check).
+ * @returns {Promise<Keypair>} The loaded keypair.
  */
-export function loadSigner() {
-  // 1. Check if already loaded
-  if (signerKeypair) {
-    return signerKeypair;
+export async function loadSigner(connection) {
+  if (signerKeypair) return signerKeypair;
+
+  // 1. Define path to ./id.json in the current working directory
+  const keypairPath = path.join(process.cwd(), 'id.json');
+
+  // 2. Check if file exists
+  if (!fs.existsSync(keypairPath)) {
+    return handleNewWallet(keypairPath);
   }
 
+  // 3. Load existing wallet
   try {
-    // 2. Construct the standard Solana CLI wallet path
-    const keypairPath = path.join(os.homedir(), '.config', 'solana', 'id.json');
-
-    // 3. Check if the wallet file exists
-    if (!fs.existsSync(keypairPath)) {
-      log(`{${colors.RED}-fg}SIGNER NOT FOUND:{/${colors.RED}-fg} could not find keypair at ${keypairPath}`);
-      log(`{${colors.YELLOW}-fg}please ensure your Solana CLI wallet is set up (run \`solana-keygen new\`){/${colors.YELLOW}-fg}`);
-      return null;
-    }
-
-    // 4. Read, parse, and create the Keypair object
     const keypairFile = fs.readFileSync(keypairPath, 'utf-8');
     const secretKey = Uint8Array.from(JSON.parse(keypairFile));
     signerKeypair = Keypair.fromSecretKey(secretKey);
-
-    // 5. Log success
-    log(`loaded wallet: ${signerKeypair.publicKey.toBase58()}`);
-    return signerKeypair;
-
   } catch (e) {
-    // 6. Handle any other errors (e.g., file permissions, corrupt JSON)
-    log(`error loading keypair: ${e.message}`);
-    return null;
+    log(`ERROR: Failed to parse local id.json.`);
+    log(`Details: ${e.message}`);
+    process.exit(1);
   }
+
+  const pubkeyStr = signerKeypair.publicKey.toBase58();
+  
+  // 4. Check Balance
+  log(`checking balance for wallet: ${pubkeyStr.slice(0,4)}...${pubkeyStr.slice(-4)}`);
+  
+  const balanceLamports = await connection.getBalance(signerKeypair.publicKey);
+  const balanceSol = balanceLamports / LAMPORTS_PER_SOL;
+
+  // 5. Enforce Funding
+  if (balanceSol === 0) {
+    log(`\x1b[33mWALLET EMPTY: Account has 0 SOL.\x1b[0m`);
+    log(`Please fund the following address to proceed:`);
+    log(`\x1b[33m${pubkeyStr}\x1b[0m`);
+    log(`(App will exit now. Restart after sending funds.)`);
+    setTimeout(() => process.exit(1), 5000);
+  }
+
+  // 6. Success - Update State and Return
+  setAppState({ userBalance: balanceSol });
+  log(`wallet loaded. balance: ${balanceSol.toFixed(4)} SOL`);
+  
+  return signerKeypair;
 }
 
 /**
  * Gets the loaded signer keypair.
- * Returns null if `loadSigner` has not been successfully called.
- * @returns {Keypair | null} The cached signer keypair.
+ * @returns {Keypair | null}
  */
 export function getSigner() {
   return signerKeypair;
+}
+
+// --- Private Helper Functions ---
+
+/**
+ * Handles the creation of a new wallet file and exits.
+ * @param {string} filePath - The path to save the new keypair.
+ */
+function handleNewWallet(filePath) {
+  // 1. Generate new keypair
+  const newKeypair = Keypair.generate();
+  const secretKeyArray = Array.from(newKeypair.secretKey);
+
+  // 2. Write to disk
+  fs.writeFileSync(filePath, JSON.stringify(secretKeyArray));
+
+  const pubkey = newKeypair.publicKey.toBase58();
+
+  // 3. Inform User and Exit
+  console.log(`\x1b[33m                                ========\x1b[0m`);
+  console.log(`\x1b[33m                                ========\x1b[0m`);
+  console.log(`\x1b[33m                           ==================\x1b[0m`);
+  console.log(`\x1b[33m                           ==================\x1b[0m`);
+  console.log(`\x1b[33m                           ==================\x1b[0m`);
+  console.log(`\x1b[33m                           ==================\x1b[0m`);
+  console.log(`\x1b[33m          =============    ==================    ============\x1b[0m`);
+  console.log(`\x1b[33m          =============                          ============\x1b[0m`);
+  console.log(`\x1b[33m          =============                          ============\x1b[0m`);
+  console.log(`\x1b[33m          =============    ==================    ============\x1b[0m`);
+  console.log(`\x1b[33m          ========         ==================         =======\x1b[0m`);
+  console.log(`\x1b[33m          ========   ==============================   =======\x1b[0m`);
+  console.log(`\x1b[33m          ========   ==============================   =======\x1b[0m`);
+  console.log(`\x1b[33m                     ==============================\x1b[0m`);
+  console.log(`\x1b[33m     =======    ========================================    =======\x1b[0m`);
+  console.log(`\x1b[33m    -=======    ========================================    =======-\x1b[0m`);
+  console.log(`\x1b[33m    -=======    ========================================    =======-\x1b[0m`);
+  console.log(`\x1b[33m============    ========================================    ============\x1b[0m`);
+  console.log(`\x1b[33m============    ========================================    ============\x1b[0m`);
+  console.log(`\x1b[33m============    ========================================    ============\x1b[0m`);
+  console.log(`\x1b[33m============    ========================================    ============\x1b[0m`);
+  console.log(`\x1b[33m============    ========================================    ============\x1b[0m`);
+  console.log(`\x1b[33m    -=======    ========================================    =======-\x1b[0m`);
+  console.log(`\x1b[33m    -=======    ========================================    =======-\x1b[0m`);
+  console.log(`\x1b[33m     -------    -----==============================-----    -------\x1b[0m`);
+  console.log(`\x1b[33m                     ==============================\x1b[0m`);
+  console.log(`\x1b[33m          -=======   ==============================   =======\x1b[0m`);
+  console.log(`\x1b[33m          ========   ==============================   =======\x1b[0m`);
+  console.log(`\x1b[33m          ========         ==================         =======\x1b[0m`);
+  console.log(`\x1b[33m          =============    ==================   =============  YEEHAW\x1b[0m`);
+  console.log(`\x1b[33m          =============    ------------------   =============\x1b[0m`);
+  console.log(`\x1b[33m          =============                         =============\x1b[0m`);
+  console.log(`\x1b[33m          =============    ==================   =============\x1b[0m`);
+  console.log(`\x1b[33m                           ==================\x1b[0m`);
+  console.log(`\x1b[33m                           ==================\x1b[0m`);
+  console.log(`\x1b[33m       THE SUN IS UP       ==================\x1b[0m`);
+  console.log(`\x1b[33m                           -----========-----\x1b[0m`);
+  console.log(`\x1b[33m                                ========         LETS MINE AND SHINE\x1b[0m`);
+  console.log(`\x1b[33m                                ========\x1b[0m`);
+  console.log(`\n------------------------------------------------------------------------`);
+  console.log(`  INITIAL SETUP DETECTED, CREATED NEW BOT WALLET`);
+  console.log(`------------------------------------------------------------------------`);
+  console.log(`  Location: ${filePath}`);
+  console.log(`  Address: \x1b[33m${pubkey}\x1b[0m`);
+  console.log(`------------------------------------------------------------------------`);
+  console.log(`  \x1b[31mACTION REQUIRED:\x1b[0m`);
+  console.log(`  We have created a new local wallet for your bot`);
+  console.log(`  Send SOL to the address above. You will be able to cash out at anytime`);
+  console.log(`  Once funded, run this app again`);
+  console.log(`------------------------------------------------------------------------\n`);
+
+  process.exit(1);
 }

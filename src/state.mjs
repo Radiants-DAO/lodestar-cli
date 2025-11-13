@@ -26,7 +26,13 @@ const appState = {
   appMode: APP_MODES.IDLE,
   isSpeculating: false,
   isAudioEnabled: false,
-  customDeployAmount: 0.001,
+  customDeployAmount: 0.0001,
+
+  // --- Wallet & User Data ---
+  userBalance: 0,
+  minerRewardsSol: '0',
+  minerRewardsOre: '0',
+  minerRefinedOre: '0',
 
   // --- Real-time Price Data ---
   PRICE_ORE_USD: 0,

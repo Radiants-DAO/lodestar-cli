@@ -31,6 +31,8 @@ export const RPC_URL = 'https://solana-rpc.parafi.tech';
 export const MS_PER_SLOT = 400;
 export const PRICE_UPDATE_MS = 60_000; // 1 minute
 export const SOUND_COOLDOWN_MS = 5000;  // 5 seconds
+export const CLAIM_INTERVAL_MS = 30 * 60 * 1000; // 30 Minutes
+export const MIN_CLAIM_THRESHOLD = 0.001;
 
 // --- Application Logic ---
 export const APP_MODES = {

@@ -41,7 +41,7 @@ export function resetRoundFlags() {
  * @param {number} secondsRemaining - The number of seconds left in the round.
  * @param {object} connection - The Solana connection object.
  */
-export function runAutomationCheck(roundData, secondsRemaining, connection) {
+export function runAutomationCheck(roundData, secondsRemaining, connection, signer) {
   const {
     appMode,
     isSpeculating,
@@ -107,13 +107,6 @@ export function runAutomationCheck(roundData, secondsRemaining, connection) {
     // @TODO
     log(`skipping deploy, speculate is on`);
   } else {
-    // Execute the transaction
-    const signer = getSigner();
-    if (signer) {
-      sendDeployTx(targets, connection, signer);
-    } else {
-      log('DEPLOY FAILED: keypair not loaded');
-      log('make sure ~/.config/solana/id.json exists');
-    }
+    sendDeployTx(targets, connection, signer);
   }
 }

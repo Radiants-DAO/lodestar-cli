@@ -27,15 +27,15 @@ import {
   getMinerPda,
   parseMiner,
 } from './solana.mjs';
-import { computeEVStarForBlock, getOreValueInSOL, checkPoolDelta } from './ev.mjs';
+import { computeEVStarForBlock, getOreValueInSOL, /* checkPoolDelta */ } from './ev.mjs';
 import { runAutomationCheck, resetRoundFlags } from './automation.mjs';
 import { getSigner } from './wallet.mjs';
-import { sendCheckpointTx } from './transactions.mjs';
 import { colors } from './theme.mjs';
 
 // --- Module-level Variables ---
 let tui;
 let conn;
+let walletSigner;
 
 // --- Local Utility ---
 
@@ -63,7 +63,8 @@ function updateTUI(roundData) {
   const { gridWidgets, bestEVDisplay, statsLog, screen } = tui;
 
   // 1. Check for significant pool deltas (and play sound if needed)
-  checkPoolDelta(roundData);
+  // This function is out of scope for the purpose of the app
+  //checkPoolDelta(roundData);
 
   // 2. Calculate global EV parameters
   const T = Number(roundData.total_deployed.toString()) * SOL_PER_LAMPORT;
@@ -221,7 +222,7 @@ export async function updateCountdown() {
 
       // Trigger automation check if conditions are met
       if (currentRoundData && !isTransitioningRound) {
-        runAutomationCheck(currentRoundData, secondsRemaining, conn);
+        runAutomationCheck(currentRoundData, secondsRemaining, conn, walletSigner);
       }
     }
     // 4. Handle Ended Round (slotsRemaining <= 0)
@@ -382,10 +383,11 @@ async function processBoardUpdate(accountInfo) {
  * @param {Connection} connection - The Solana connection object.
  * @param {object} tuiWidgets - The object containing all TUI widgets.
  */
-export async function startGameLoop(connection, tuiWidgets) {
+export async function startGameLoop(connection, signer, tuiWidgets) {
   // 1. Set module-level variables
   tui = tuiWidgets;
   conn = connection;
+  walletSigner = signer;
 
   // 2. Subscribe to Board account
   const boardPda = getBoardPda();

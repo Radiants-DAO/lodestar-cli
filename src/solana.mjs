@@ -41,6 +41,14 @@ export function initConnection() {
   return connection;
 }
 
+/**
+ * Returns the active connection object.
+ * Useful for modules that need the connection but can't have it passed in.
+ */
+export function getConnection() {
+  return connection;
+}
+
 // --- Account Layouts ---
 
 /**
