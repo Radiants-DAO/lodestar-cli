@@ -15,6 +15,7 @@ The bot uses a self-contained wallet system, automatic reward claiming, and anyt
 
 ## Features
 
+  * **Zero Admin Fee:** The dev is starving, please donate oREVE663st4oVqRp31TdEKdjqUYmZkJ3Vofi1zEAPro (Solana)
   * **Real-time TUI Dashboard:** Monitor all 25 game squares, player counts, and real-time EV. Now includes live tracking of the bots **Miner PDA stats** (Claimable SOL, Unrefined ORE, Refined ORE).
   * **Advanced EV Calculation:** Continuously calculates the per-square Expected Value (EV) to identify profitable deployment opportunities.
   * **Intelligent Grid Highlighting:**

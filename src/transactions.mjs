@@ -84,9 +84,6 @@ export async function sendDeployTx(targets, connection, signer) {
     // 2. Get Global State
     const { currentRoundId, customDeployAmount } = getState();
     const authority = signer.publicKey;
-    const feeRecipient = new PublicKey(
-      'oREVE663st4oVqRp31TdEKdjqUYmZkJ3Vofi1zEAPro',
-    );
 
     const newRoundPda = getRoundPda(currentRoundId);
     const newRoundAccountInfo = await connection.getAccountInfo(newRoundPda);
@@ -171,8 +168,6 @@ export async function sendDeployTx(targets, connection, signer) {
 
     const amountLamports = BigInt(Math.floor(customDeployAmount / SOL_PER_LAMPORT));
     const squaresMask = createSquaresMask(targets);
-    const totalSolDeployed = customDeployAmount * targets.length;
-    const feeAmountLamports = BigInt(Math.floor(totalSolDeployed * 0.01 / SOL_PER_LAMPORT));
 
     const deployData = Buffer.alloc(1 + 8 + 4);
     deployData.writeUInt8(6, 0); // Instruction 6
@@ -184,16 +179,6 @@ export async function sendDeployTx(targets, connection, signer) {
       programId: ORE_PROGRAM_ID,
       data: deployData,
     });
-
-    if (feeAmountLamports > 0n) {
-      transaction.add(
-        SystemProgram.transfer({
-          fromPubkey: authority,
-          toPubkey: feeRecipient,
-          lamports: feeAmountLamports,
-        })
-      );
-    }
 
     // 6. Add Deploy Instruction
     transaction.add(deployInstruction);
