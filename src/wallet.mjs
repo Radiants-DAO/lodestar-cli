@@ -32,15 +32,14 @@ let signerKeypair = null;
 export async function loadSigner(connection) {
   if (signerKeypair) return signerKeypair;
 
-  // 1. Define path to ./id.json in the current working directory
   const keypairPath = path.join(process.cwd(), 'id.json');
 
-  // 2. Check if file exists
+  // 1. Check if file exists
   if (!fs.existsSync(keypairPath)) {
     return handleNewWallet(keypairPath);
   }
 
-  // 3. Load existing wallet
+  // 2. Load existing wallet
   try {
     const keypairFile = fs.readFileSync(keypairPath, 'utf-8');
     const secretKey = Uint8Array.from(JSON.parse(keypairFile));
@@ -53,22 +52,13 @@ export async function loadSigner(connection) {
 
   const pubkeyStr = signerKeypair.publicKey.toBase58();
   
-  // 4. Check Balance
+  // 3. Check Balance
   log(`checking balance for wallet: ${pubkeyStr.slice(0,4)}...${pubkeyStr.slice(-4)}`);
   
   const balanceLamports = await connection.getBalance(signerKeypair.publicKey);
   const balanceSol = balanceLamports / LAMPORTS_PER_SOL;
 
-  // 5. Enforce Funding
-  if (balanceSol === 0) {
-    log(`\x1b[33mWALLET EMPTY: Account has 0 SOL.\x1b[0m`);
-    log(`Please fund the following address to proceed:`);
-    log(`\x1b[33m${pubkeyStr}\x1b[0m`);
-    log(`(App will exit now. Restart after sending funds.)`);
-    setTimeout(() => process.exit(1), 5000);
-  }
-
-  // 6. Success - Update State and Return
+  // 4. Update State and Return
   setAppState({ userBalance: balanceSol });
   log(`wallet loaded. balance: ${balanceSol.toFixed(4)} SOL`);
   

@@ -15,6 +15,8 @@ import { PublicKey } from '@solana/web3.js';
 // --- Solana Program & Token Addresses ---
 export const ORE_PROGRAM_ID = new PublicKey('oreV3EG1i9BEgiAJ8b177Z2S2rMarzak4NMv1kULvWv');
 export const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
+export const ENTROPY_PROGRAM_ID = new PublicKey('3jSkUuYBoJzQPMEzTvkDFXCZUBksPamrVhrnHR9igu2X');
+export const ORE_VAR_ADDRESS = new PublicKey('BWCaDY96Xe4WkFq1M7UiCCRcChsJ3p51L5KrGzhxgm2E');
 export const ORE_TOKEN_ADDRESS = 'oreoU2P8bN6jkk3jbaiVxYnG1dCXcYxwhwyK9jSybcp';
 export const SOL_TOKEN_ADDRESS = 'So11111111111111111111111111111111111111112';
 
@@ -27,7 +29,8 @@ export const TREASURY_SEED = Buffer.from("treasury");
 export const ACCOUNT_DISCRIMINATOR_SIZE = 8;
 
 // --- Network & Time Configuration ---
-export const RPC_URL = 'https://solana-rpc.parafi.tech';
+// export const RPC_URL = 'https://solana-rpc.parafi.tech';
+export const RPC_URL = 'https://api.mainnet-beta.solana.com';
 export const MS_PER_SLOT = 400;
 export const PRICE_UPDATE_MS = 60_000; // 1 minute
 export const SOUND_COOLDOWN_MS = 5000;  // 5 seconds

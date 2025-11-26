@@ -23,7 +23,7 @@ console.warn = (...args) => {
 };
 
 // --- Imports ---
-import { initTUI } from './tui.mjs';
+import { initTUI, showLowBalanceWarning } from './tui.mjs';
 import { setUtilWidgets, log } from './utils.mjs';
 import { initConnection } from './solana.mjs';
 import { updatePrices, updateMinerStats } from './pricing.mjs';
@@ -31,7 +31,7 @@ import { updateCountdown, startGameLoop } from './game.mjs';
 import { PRICE_UPDATE_MS, CLAIM_INTERVAL_MS, MIN_CLAIM_THRESHOLD } from './constants.mjs';
 import { loadSigner } from './wallet.mjs';
 import { sendClaimSolTx } from './transactions.mjs';
-import { getState } from './state.mjs';
+import { getState, setAppState } from './state.mjs';
 
 /**
  * Main application entry point.
@@ -45,11 +45,26 @@ async function main() {
 
   // 2. Setup Solana Connection & Wallet
   const connection = initConnection();
-
-  // 2. Setup Solana Connection & Wallet
   const signer = await loadSigner(connection);
 
-  // 3. Start Main Application Loops
+  // 3. Bot wallet balance check
+  const { userBalance, customDeployAmount } = getState();
+
+  if (userBalance < customDeployAmount) {
+    // A. Lock State
+    setAppState({ 
+      isSpeculating: true, 
+      lowBalanceMode: true 
+    });
+
+    // B. Log to console window
+    log(`LOW FUNDS DETECTED (${userBalance.toFixed(4)} SOL). ENFORCING SPECTATE MODE.`);
+
+    // C. Show TUI Popup
+    showLowBalanceWarning(screen, signer.publicKey.toBase58());
+  }
+
+  // 4. Start Main Application Loops
   try {
     log(`connecting to ${connection.rpcEndpoint}...`);
 
@@ -83,7 +98,7 @@ async function main() {
     await startGameLoop(connection, signer, tuiWidgets);
 
   } catch (error) {
-    // 4. Handle Fatal Errors
+    // 5. Handle Fatal Errors
     log(`FATAL ERROR: ${error.message}`);
     log(error.stack);
 

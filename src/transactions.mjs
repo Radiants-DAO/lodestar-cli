@@ -29,6 +29,8 @@ import {
   ORE_PROGRAM_ID,
   SOL_PER_LAMPORT,
   SYSTEM_PROGRAM_ID,
+  ENTROPY_PROGRAM_ID,
+  ORE_VAR_ADDRESS,
 } from './constants.mjs';
 import {
   getBoardPda,
@@ -164,6 +166,8 @@ export async function sendDeployTx(targets, connection, signer) {
       { pubkey: getMinerPda(authority), isSigner: false, isWritable: true },
       { pubkey: getRoundPda(currentRoundId), isSigner: false, isWritable: true },
       { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: ORE_VAR_ADDRESS, isSigner: false, isWritable: true },
+      { pubkey: ENTROPY_PROGRAM_ID, isSigner: false, isWritable: false },
     ];
 
     const amountLamports = BigInt(Math.floor(customDeployAmount / SOL_PER_LAMPORT));

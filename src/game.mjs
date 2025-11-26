@@ -24,12 +24,9 @@ import {
   isSlotHashPopulated,
   calculateRng,
   getWinningSquare,
-  getMinerPda,
-  parseMiner,
 } from './solana.mjs';
-import { computeEVStarForBlock, getOreValueInSOL, /* checkPoolDelta */ } from './ev.mjs';
+import { computeEVStarForBlock, getOreValueInSOL } from './ev.mjs';
 import { runAutomationCheck, resetRoundFlags } from './automation.mjs';
-import { getSigner } from './wallet.mjs';
 import { colors } from './theme.mjs';
 
 // --- Module-level Variables ---
@@ -37,8 +34,39 @@ let tui;
 let conn;
 let walletSigner;
 
-// --- Local Utility ---
+// --- SLOT CLOCK ---
+let lastSyncedSlot = 0;
+let lastSyncedTime = 0;
+const SLOT_RESYNC_INTERVAL = 60000; // Re-fetch slot from RPC every 60s
 
+/**
+ * Estimates the current slot based on local time
+ * @returns {Promise<number>} The estimated current slot.
+ */
+async function getOrEstimateSlot() {
+  const now = Date.now();
+
+  // If we have never synced, or it's been a minute, fetch real slot
+  if (lastSyncedSlot === 0 || (now - lastSyncedTime > SLOT_RESYNC_INTERVAL)) {
+    try {
+      lastSyncedSlot = await conn.getSlot();
+      lastSyncedTime = now;
+      return lastSyncedSlot;
+    } catch (e) {
+      // If RPC fails, fallback to estimation based on last known data
+      if (lastSyncedSlot === 0) return 0; // Startup fail
+    }
+  }
+
+  // Calculate slots passed since last sync
+  // Solana slots are ~400ms target
+  const timeDiff = now - lastSyncedTime;
+  const slotsPassed = Math.floor(timeDiff / MS_PER_SLOT);
+  
+  return lastSyncedSlot + slotsPassed;
+}
+
+// --- Local Utility ---
 /**
  * Truncates a Solana address for cleaner display.
  * @param {string} address - The address string.
@@ -100,7 +128,7 @@ function updateTUI(roundData) {
     const countVal = Number(roundData.count[i].toString());
     const deployedVal = Number(roundData.deployed[i].toString());
     const sol = (deployedVal * SOL_PER_LAMPORT);
-    const ratio = (countVal > 0) ? (sol / countVal) : 0;
+    const ratio = (countVal > 0) ? (sol / countVal) : Infinity;
 
     ratios.push({ id: i, ratio });
     deployedValues[i] = sol.toFixed(4);
@@ -111,7 +139,7 @@ function updateTUI(roundData) {
   }
 
   // 6. Calculate and Apply Ratio Highlighting
-  const validRatios = ratios.filter(r => r.ratio > 0).sort((a, b) => a.ratio - b.ratio);
+  const validRatios = ratios.filter(r => r.ratio < Infinity && r.ratio > 0).sort((a, b) => a.ratio - b.ratio);
   const top5Best = validRatios.slice(0, 5);
   const top5Worst = validRatios.slice(-5).reverse();
 
@@ -176,13 +204,16 @@ function displayWinner(roundData, roundIdStr) {
     lastWinnerDisplay.setContent(`  last winner: {${colors.GREEN}-fg}#${winnerStr}{/${colors.GREEN}-fg}`);
     countdownTimer.setContent(`waiting...`);
 
-    // 5. Log and play sound
+    // 5. Log and """play sound"""
     playNotificationSound(`winner for round ${roundIdStr} is #${winnerStr}`);
     screen.render();
   }
 }
 
 // --- Main Game Loop & Event Handlers ---
+
+// Timer to throttle the "Winner Check" polling so it doesn't run every second
+let lastWinnerPollTime = 0;
 
 /**
  * Updates the round countdown timer and handles end-of-round logic.
@@ -207,11 +238,11 @@ export async function updateCountdown() {
   let countdownString;
   try {
     // 2. Get current slot and calculate remaining time
-    const currentSlot = await conn.getSlot();
+    const currentSlot = await getOrEstimateSlot();
     const endSlot = Number(currentBoardData.end_slot.toString());
     const slotsRemaining = endSlot - currentSlot;
 
-    // 3. Handle Active Round (slotsRemaining > 0)
+    // 3. Handle Active Round
     if (slotsRemaining > 0) {
       const secondsRemaining = Math.floor(slotsRemaining * (MS_PER_SLOT / 1000));
       let mm = String(Math.floor(secondsRemaining / 60)).padStart(2, '0');
@@ -226,7 +257,7 @@ export async function updateCountdown() {
         runAutomationCheck(currentRoundData, secondsRemaining, conn, walletSigner);
       }
     }
-    // 4. Handle Ended Round (slotsRemaining <= 0)
+    // 4. Handle Ended Round
     else {
       const hashPopulated = currentRoundData ? isSlotHashPopulated(currentRoundData.slot_hash) : false;
 
@@ -238,7 +269,9 @@ export async function updateCountdown() {
         // 4b. Hash not yet populated, re-check account
         countdownString = `{${colors.GREY}-fg}waiting for next round...{/${colors.GREY}-fg}`;
 
-        if (currentRoundId.gtn(-1)) {
+        const now = Date.now();
+        if (currentRoundId.gtn(-1) && (now - lastWinnerPollTime > 5000)) {
+          lastWinnerPollTime = now;
           try {
             const roundPda = getRoundPda(currentRoundId);
             const roundAccountInfo = await conn.getAccountInfo(roundPda);
@@ -276,6 +309,11 @@ function processRoundUpdate(accountInfo) {
     const roundData = parseRound(accountInfo.data);
     setAppState({ currentRoundData: roundData });
     updateTUI(roundData);
+
+    // If the hash just populated, display winner immediately
+    if (isSlotHashPopulated(roundData.slot_hash)) {
+       displayWinner(roundData, getState().currentRoundId.toString());
+    }
   } catch (e) {
     log(`error parsing Round update: ${e.message}`);
   }
@@ -335,8 +373,11 @@ async function processBoardUpdate(accountInfo) {
     // 4. Handle No Round Change (data update for current round)
     if (newRoundId_BN.eq(currentRoundId)) {
       const roundPda = getRoundPda(currentRoundId);
-      const roundAccountInfo = await conn.getAccountInfo(roundPda);
-      if (roundAccountInfo) processRoundUpdate(roundAccountInfo);
+
+      if (!getState().currentRoundData) {
+        const roundAccountInfo = await conn.getAccountInfo(roundPda);
+        if (roundAccountInfo) processRoundUpdate(roundAccountInfo);
+      }
       return;
     }
 
@@ -352,20 +393,19 @@ async function processBoardUpdate(accountInfo) {
     if (roundSubscriptionId) {
       try {
         await conn.removeAccountChangeListener(roundSubscriptionId);
-        log("clearing old round");
-      } catch (e) {
-        log(`no unsub needed`);
-      }
+      } catch (e) { /* ignore */ }
     }
 
     // 5b. Subscribe to new round
     const roundPda = getRoundPda(newRoundId_BN);
     log(`current round: ${newRoundId_BN.toString()} - ${truncateAddress(roundPda.toBase58())}`);
+
     const newSubscriptionId = conn.onAccountChange(
       roundPda,
       processRoundUpdate,
       'confirmed'
     );
+
     setAppState({ roundSubscriptionId: newSubscriptionId });
 
     // 5c. Fetch initial data for the new round
@@ -375,7 +415,7 @@ async function processBoardUpdate(accountInfo) {
     }
   } catch (e) {
     log(`error in processing board update: ${e.message}`);
-    setAppState({ isTransitioningRound: false }); // Failsafe
+    setAppState({ isTransitioningRound: false });
   }
 }
 

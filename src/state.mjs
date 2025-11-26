@@ -25,6 +25,7 @@ const appState = {
   // --- User-configurable Settings ---
   appMode: APP_MODES.IDLE,
   isSpeculating: false,
+  lowBalanceMode: false,
   isAudioEnabled: false,
   customDeployAmount: 0.0001,
 
@@ -92,6 +93,10 @@ export function setAppMode(mode) {
  * @returns {boolean} The new spectation state.
  */
 export function toggleSpeculate() {
+  if (appState.lowBalanceMode) {
+    return true;
+  }
+
   appState.isSpeculating = !appState.isSpeculating;
   return appState.isSpeculating;
 }

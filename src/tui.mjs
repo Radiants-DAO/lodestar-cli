@@ -386,6 +386,66 @@ function setupKeyListeners(screen) {
   });
 }
 
+/**
+ * Creates a popup warning for low balance.
+ * Forces the user to acknowledge before using the app in spectate mode.
+ * @param {blessed.screen} screen - The main blessed screen.
+ * @param {string} address - The wallet address to display.
+ */
+export function showLowBalanceWarning(screen, address) {
+  // 1. Create the Box
+  const alertBox = blessed.box({
+    parent: screen,
+    top: 'center',
+    left: 'center',
+    width: 60,
+    height: 12,
+    border: 'line',
+    style: { border: { fg: colors.RED } },
+    label: ' LOW BALANCE WARNING ',
+    tags: true,
+    keys: true, // Grab keys
+    vi: true
+  });
+
+  // 2. Content
+  const contentText = 
+    `{center}Your wallet balance is too low to deploy.{/center}\n\n` +
+    `{center}The app has been locked to {${colors.GREEN}-fg}SPECTATE MODE{/}.{/center}\n` +
+    `{center}To play, send SOL to:{/center}\n\n` +
+    `{center}{${colors.YELLOW}-fg}${address}{/}{/center}`;
+
+  const text = blessed.text({
+    parent: alertBox,
+    top: 1,
+    left: 2,
+    right: 2,
+    tags: true,
+    content: contentText,
+  });
+
+  // 3. Instruction Footer
+  blessed.text({
+    parent: alertBox,
+    bottom: 1,
+    width: '100%',
+    align: 'center',
+    tags: true,
+    content: '{gray-fg}(press [ENTER] to continue in spectate mode){/}',
+  });
+
+  // 4. Render and Focus
+  screen.append(alertBox);
+  alertBox.focus();
+  screen.render();
+
+  // 5. Handle Keypress to Close
+  alertBox.key(['enter', 'escape', 'space'], () => {
+    alertBox.destroy();
+    screen.render();
+  });
+}
+
 // --- Main TUI Initializer ---
 
 /**
