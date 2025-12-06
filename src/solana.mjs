@@ -57,7 +57,8 @@ export function getConnection() {
 export const BOARD_LAYOUT = struct([
   u64('round_id'),
   u64('start_slot'),
-  u64('end_slot')
+  u64('end_slot'),
+  u64('epoch_id')
 ]);
 
 /**
@@ -74,6 +75,7 @@ export const ROUND_LAYOUT = struct([
   publicKey('top_miner'),
   u64('top_miner_reward'),
   u64('total_deployed'),
+  u64('total_miners'),
   u64('total_vaulted'),
   u64('total_winnings'),
 ]);
@@ -96,6 +98,7 @@ export const MINER_LAYOUT = struct([
   u64('round_id'),
   u64('lifetime_rewards_sol'),
   u64('lifetime_rewards_ore'),
+  u64('lifetime_deployed'),
 ]);
 
 // --- PDA Getters ---

@@ -111,11 +111,13 @@ function updateTUI(roundData) {
     }
   }
 
+  const uniquePlayers = roundData.total_miners ? roundData.total_miners.toString() : '?';
+
   // 4. Update Best EV Display
   if (bestEV.id !== -1) {
-    bestEVDisplay.setContent(`      best ev: {${colors.YELLOW}-fg}#${bestEV.id} (${formatSol(bestEV.ev)} sol){/${colors.YELLOW}-fg}`);
+    bestEVDisplay.setContent(`      best ev: {${colors.YELLOW}-fg}#${bestEV.id} (${formatSol(bestEV.ev)} sol){/${colors.YELLOW}-fg} | players: {${colors.BLUE}-fg}${uniquePlayers}{/}`);
   } else {
-    bestEVDisplay.setContent(`      best ev: {${colors.RED}-fg}n/a (all negative){/${colors.RED}-fg}`);
+    bestEVDisplay.setContent(`      best ev: {${colors.RED}-fg}n/a{/${colors.RED}-fg} | players: {${colors.BLUE}-fg}${uniquePlayers}{/}`);
   }
 
   // 5. Gather All Square Data
