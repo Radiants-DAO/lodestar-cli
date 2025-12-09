@@ -127,7 +127,7 @@ export async function sendDeployTx(targets, connection, signer) {
       ComputeBudgetProgram.setComputeUnitLimit({ units: 750000 }),
     );
     transaction.add(
-      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }),
     );
 
     // 5. Checkpoint Logic (Instruction 2)
