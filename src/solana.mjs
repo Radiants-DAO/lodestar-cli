@@ -24,6 +24,7 @@ import {
   MINER_SEED,
   AUTOMATION_SEED,
   TREASURY_SEED,
+  CONFIG_SEED,
   ACCOUNT_DISCRIMINATOR_SIZE,
 } from './constants.mjs';
 
@@ -109,6 +110,15 @@ export const MINER_LAYOUT = struct([
  */
 export function getBoardPda() {
   const [pda] = PublicKey.findProgramAddressSync([BOARD_SEED], ORE_PROGRAM_ID);
+  return pda;
+}
+
+/**
+ * Gets the PDA for the Config account.
+ * @returns {PublicKey} The Config PDA.
+ */
+export function getConfigPda() {
+  const [pda] = PublicKey.findProgramAddressSync([CONFIG_SEED], ORE_PROGRAM_ID);
   return pda;
 }
 

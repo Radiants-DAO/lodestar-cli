@@ -26,6 +26,7 @@ export const ROUND_SEED = Buffer.from("round");
 export const MINER_SEED = Buffer.from("miner");
 export const AUTOMATION_SEED = Buffer.from("automation");
 export const TREASURY_SEED = Buffer.from("treasury");
+export const CONFIG_SEED = Buffer.from("config");
 export const ACCOUNT_DISCRIMINATOR_SIZE = 8;
 
 // --- Network & Time Configuration ---
@@ -51,7 +52,7 @@ export const DELTA_THRESHOLD_SOL = 0.6; // SOL difference to trigger pool delta 
 export const SOL_PER_LAMPORT = 1 / 1_000_000_000;
 export const REF_MULT = 0.9;
 export const ADMIN_FEE = 0.01;
-export const PROTOCOL_CUT = 0.10;
+export const PROTOCOL_CUT = 0.109;
 export const P_WIN = 1 / 25;      // Probability of any single square winning
 export const HIT_PROB = 1 / 625;  // Probability of hitting the motherlode
 export const ADMIN_COST_FACTOR = ADMIN_FEE / (1 - ADMIN_FEE);

@@ -37,7 +37,7 @@ let walletSigner;
 // --- SLOT CLOCK ---
 let lastSyncedSlot = 0;
 let lastSyncedTime = 0;
-const SLOT_RESYNC_INTERVAL = 60000; // Re-fetch slot from RPC every 60s
+const SLOT_RESYNC_INTERVAL = 10000; // Re-fetch slot from RPC every 10s
 
 /**
  * Estimates the current slot based on local time
@@ -228,7 +228,30 @@ export async function updateCountdown() {
     currentRoundData,
     currentRoundId,
     isTransitioningRound,
+    lastBoardUpdate,
   } = getState();
+
+  // If we haven't received a board update in 60 seconds, force a fetch.
+  const now = Date.now();
+  if (now - lastBoardUpdate > 60000) {
+    log('warning: board data stale (>60s), force fetching...');
+    
+    // Reset the timer immediately to prevent spamming fetches
+    setAppState({ lastBoardUpdate: now });
+
+    try {
+      const boardPda = getBoardPda();
+      const accountInfo = await conn.getAccountInfo(boardPda);
+      if (accountInfo) {
+        log('stale check: board updated successfully');
+        await processBoardUpdate(accountInfo);
+        // processBoardUpdate will update state, so we return to let the next tick handle the UI
+        return; 
+      }
+    } catch (e) {
+      log(`stale check failed: ${e.message}`);
+    }
+  }
 
   // 1. Handle "no board data" case
   if (!currentBoardData) {
@@ -356,7 +379,10 @@ async function processBoardUpdate(accountInfo) {
   try {
     // 1. Parse board data
     const boardData = parseBoard(accountInfo.data);
-    setAppState({ currentBoardData: boardData });
+    setAppState({
+      currentBoardData: boardData,
+      lastBoardUpdate: Date.now(),
+    });
 
     // 2. Check if a new round has started
     const newRoundId_BN = new BN(boardData.round_id.toString());

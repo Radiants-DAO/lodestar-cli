@@ -38,6 +38,7 @@ import {
   getMinerPda,
   getAutomationPda,
   getTreasuryPda,
+  getConfigPda,
   parseMiner,
   parseRound,
 } from './solana.mjs';
@@ -126,7 +127,7 @@ export async function sendDeployTx(targets, connection, signer) {
       ComputeBudgetProgram.setComputeUnitLimit({ units: 750000 }),
     );
     transaction.add(
-      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000000 }),
     );
 
     // 5. Checkpoint Logic (Instruction 2)
@@ -163,9 +164,11 @@ export async function sendDeployTx(targets, connection, signer) {
       { pubkey: authority, isSigner: false, isWritable: true },
       { pubkey: getAutomationPda(authority), isSigner: false, isWritable: true },
       { pubkey: getBoardPda(), isSigner: false, isWritable: true },
+      { pubkey: getConfigPda(), isSigner: false, isWritable: true },
       { pubkey: getMinerPda(authority), isSigner: false, isWritable: true },
       { pubkey: getRoundPda(currentRoundId), isSigner: false, isWritable: true },
       { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: ORE_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: ORE_VAR_ADDRESS, isSigner: false, isWritable: true },
       { pubkey: ENTROPY_PROGRAM_ID, isSigner: false, isWritable: false },
     ];

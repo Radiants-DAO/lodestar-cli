@@ -44,6 +44,7 @@ const appState = {
   currentRoundId: new BN(-1),
   currentBoardData: null,
   currentRoundData: null,
+  lastBoardUpdate: Date.now(),
 
   // --- Internal TUI & Loop Flags ---
   lastSoundTime: 0,
