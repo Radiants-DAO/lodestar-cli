@@ -1,141 +1,141 @@
-# 🌟lodestar-cli
 
+# 🌟lodestar-cli
 
 > gm gm, lets mine & shine
 
-
 ![](screenshot.png)
-
-
-**lodestar-cli** is a sophisticated, terminal-based (TUI) automation bot for the ORE v3 blockchain game on Solana. It provides a real-time dashboard of the entire game board, calculates Expected Value (EV) for all 25 squares, and automatically deploys SOL to the most profitable squares based on your chosen strategy.
+**lodestar-cli** is a zero fee, terminal-based (TUI) automation bot for the ORE v3 blockchain game on Solana. It provides a real-time dashboard of the entire game board, calculates Expected Value (EV) for all 25 squares, and automatically deploys SOL to the most profitable squares based on your chosen strategy.
 
 The bot uses a self-contained wallet system, automatic reward claiming, and anytime cash-out functionality to easily secure your profits.
 
------
-
 ## Features
 
-  * **Zero Admin Fee:** The dev is starving, please donate oREVE663st4oVqRp31TdEKdjqUYmZkJ3Vofi1zEAPro (Solana)
-  * **Real-time TUI Dashboard:** Monitor all 25 game squares, player counts, and real-time EV. Now includes live tracking of the bots **Miner PDA stats** (Claimable SOL, Unrefined ORE, Refined ORE).
-  * **Advanced EV Calculation:** Continuously calculates the per-square Expected Value (EV) to identify profitable deployment opportunities.
-  * **Intelligent Grid Highlighting:**
-      * **Ratio (Border):** The top 5 **best** squares (lowest SOL/player) are **yellow**. The 5 **worst** are **red**.
-      * **EV (Text):** The best EV square is **green**, positive EV is **blue**, and negative EV is **red**.
-  * **Automated EV-Based Deployment:** Automatically executes transactions in the final seconds of a round based on your selected risk profile.
-  * **Smart Automation Modes:**
-      * **`1x EV`**: Deploys to the single best positive-EV square.
-      * **`3x EV`**: Deploys to the top 3 best positive-EV squares.
-      * **`5x EV`**: Deploys to the top 5 best positive-EV squares.
-  * **Speculation Mode:** Run the bot in a "dry run" mode. It logs all potential moves without spending a single lamport.
-  * **Ephemeral Wallet System:** Automatically generates a local `id.json` keypair if one doesn't exist. No need to install global Solana CLI tools or mess with paths.
-  * **Auto-Claiming:** Automatically claims pending SOL rewards from the Miner PDA every 30 minutes (if above a minimum threshold).
-  * **One-Click Cash Out:** A built-in "Cash Out" function that claims all pending rewards, aggregates them with your wallet balance, and sends the total SOL to a destination address of your choice.
-  * **Real-time Price Tracking:** Pulls live ORE/SOL/USD prices from DexScreener.
+* **Zero Admin Fee:** Every lamport counts when you're mining! That's why we have no hidden fees like the other apps. Keep the dev from starving to death by donating to: `oREVE663st4oVqRp31TdEKdjqUYmZkJ3Vofi1zEAPro`
 
------
+* **Real-time TUI:** Visualizes the 25-square game board, player counts, SOL deployed, and EV/Ratio heatmaps.
+
+* **Smart Automation:**
+    * **1x EV:** Snipes the single best calculated square.
+    * **3x / 5x EV:** Diversifies bets across the top profitable squares.
+    * **25x EV:** Guaranteed return.
+
+* **Integrated Wallet:** Automatically generates a local keypair (`id.json`). Includes built-in **Cash Out** functionality to send profits to your main wallet.
+
+* **Auto-Update:** Checks against the GitHub repository on every launch to ensure you are always running the latest logic.
+
+* **Spectate Mode:** Simulate strategies without spending real SOL.
+
+* **Audio Alerts:** Optional sound notifications for wins and significant pool events.
 
 ## Prerequisites
 
-1.  **Node.js:** You must have Node.js (v18 or newer) installed.
-2.  **SOL:** You need an amount of SOL to fund the bot's operation.
+* **Node.js**: Version 18+ recommended.
+* **SOL:** You need an amount of SOL to fund the bot's operation.
 
------
+## Installation
 
-## Installation & Running
+1. **Download the project** (Clone or Download ZIP).
 
-1.  **Download the Code:**
-    Download or clone this repository.
+```sh
+git clone https://github.com/Radiants-DAO/lodestar-cli.git
+```
 
-    ```sh
-    git clone https://github.com/Radiants-DAO/lodestar-cli.git
-    cd lodestar-cli
-    ```
+2. **Navigate to the folder**:
 
-2.  **Install Dependencies:**
+```sh
+cd lodestar-cli
+```
 
-    ```sh
-    npm install
-    ```
+3. **Install Dependencies**:
 
-3.  **Run the Application:**
+```sh
+npm install
+```
 
-    ```sh
-    npm run start
-    ```
+4. **Run the Application**
 
------
+```sh
+npm start
+```
 
-## Bot Setup
+## Usage
 
-**lodestar-cli** uses a local wallet file (`id.json`) located in the root of the application folder.
+To start the application, simply run:
 
-1.  **First Run (Generation):**
-    Run `npm run start`. If the app cannot find an `id.json` in the current directory, it will:
+```sh
+npm start
+```
 
-      * Generate a new secure keypair.
-      * Save it as `id.json`.
-      * **Display the new Public Key (Address).**
-      * Exit the application.
+## Wallet & Funding
 
-2.  **Funding:**
-    Copy the address displayed in the terminal and send SOL to it (enough to cover your desired deploy amounts + gas fees).
+lodestar-cli uses a dedicated "bot wallet" stored locally on your machine.
 
-3.  **Start Mining:**
-    Run `npm run start` again. The app will detect the wallet, check the balance, and launch the TUI.
+### 1\. First Run / Funding
 
-*Note: If you want to use an existing Solana CLI wallet, simply copy your `id.json` file into the root of the `lodestar-cli` folder.*
+When you run the app for the first time, the app will:
 
------
+1. Generate a new Solana keypair.
 
-## How to Use lodestar-cli
+2. Save it to `id.json` in the root folder.
 
-### The TUI Layout
+3. **Display the address** and pause.
 
-  * **Game Board (Left):** A 5x5 grid showing all 25 squares. Each square displays its ID (`#1` - `#25`), player count (`P: 10`), deployed SOL, and real-time EV.
-  * **Stats (Top-Right):**
-      * **Timer:** Countdown to round end.
-      * **Last Winner:** The winning square from the previous round.
-      * **Wallet:** Your current bot wallet balance.
-      * **Miner Stats:** Shows **Claimable SOL** (rewards sitting in the PDA), **Unrefined ORE**, and **Refined ORE**.
-      * **Prices:** Live ORE/SOL prices and ratio.
-      * **Best EV:** The single best square to deploy to right now.
-  * **Logs (Bottom-Left):** Shows all activity: automation triggers, transaction signatures, errors, and status updates.
-  * **Controls (Bottom-Right):** Current settings (Mode, Speculation status) and available keybinds.
+4. **Action Required:** You must send SOL (e.g., 0.1 SOL) to this address to fund the operations.
 
-### Controls (Keybinds)
+5. Once funded, restart the app.
 
-  * **`0`**: Set mode to **IDLE** (Stops all automation).
-  * **`1`**: Set mode to **1x EV** (Deploys to the single best square).
-  * **`2`**: Set mode to **3x EV** (Deploys to the top 3 squares).
-  * **`3`**: Set mode to **5x EV** (Deploys to the top 5 squares).
-  * **`S`**: Toggle **Speculation Mode** (Dry Run) ON / OFF.
-  * **`A`**: Toggle **Audio Alerts** ON / OFF.
-  * **`D`**: Set custom **Deploy Amount**. Enter the amount of SOL to deploy *per target*.
-  * **`C`**: **Cash Out**. Opens a prompt for a destination address.
-      * *Logic:* Claims pending SOL from the Miner PDA -\> Waits for confirmation -\> Sends entire wallet balance to the address provided.
-  * **`Q` / `Ctrl+C`**: Quit the application.
+### 2\. Cashing Out
 
------
+You do not need to manually handle private keys to withdraw funds.
 
-## 🚀 Future Development
+1. Press **`C`** in the dashboard.
 
-lodestar-cli is actively being developed. Upcoming features include:
+2. Paste your destination wallet address (right-click to paste).
 
-  * **Headless / Background Mode:**
+3. The bot will claim any pending SOL rewards and send the total wallet balance to your destination.
 
-      * Implementation of a `--headless` flag for usage with process managers like `pm2`.
-      * Command-line arguments for configuration (e.g., `--method 3x --amount 0.001`).
+> **⚠️ Security Note:** Your `id.json` contains your private key in plain text. **Never share this file.** Ensure your machine is secure. This file is never transmitted elsewhere by lodestar-cli. This wallet is compatible with solana-cli and other tools- so even in the case of an extreme app failure (or the dev starves to death) your funds are safe and extractable.
 
-  * **Swarm Logic:**
+## Controls
 
-      * Coordination between multiple instances of lodestar-cli to optimize board coverage.
+Navigation is entirely keyboard-based.
 
------
+| Key | Function | Description |
+| :--- | :--- | :--- |
+| **`0`** | **Idle Mode** | Pauses all automation. No transactions will be sent. |
+| **`1`** | **1x EV** | Deploys to the single square with the highest Expected Value. |
+| **`2`** | **3x EV** | Deploys to the top 3 squares by EV. |
+| **`3`** | **5x EV** | Deploys to the top 5 squares by EV. |
+| **`4`** | **25x EV** | Deploys to all 25 squares. |
+| **`S`** | **Spectate** | Toggles "Dry Run" mode. The bot calculates logic but does not send transactions. |
+| **`D`** | **Deploy Amount** | Opens a prompt to set your bet size per square (in SOL). |
+| **`A`** | **Audio** | Toggles sound effects. |
+| **`C`** | **Cash Out** | Withdraw all funds and SOL rewards to an external wallet. |
+| **`Q`** | **Quit** | Closes the application. |
 
-## ⚠️ Disclaimer
+## Troubleshooting
 
-**This is an automation tool for a blockchain application. Use it entirely at your own risk.**
+**"InvalidAccountData" or Automation Errors**
 
-This software interacts with a live blockchain and spends real SOL. The developer(s) of lodestar-cli are not responsible for any financial losses incurred from using this tool.
+If the bot crashes repeatedly or fails to deploy due to account data mismatches, try:
 
-**Security Note:** Your `id.json` is stored unencrypted in the application folder. Do not share this file. If running on a VPS, ensure your server is secured.
+```sh
+npm run cleanup
+npm run update
+```
+
+This will close the specific PDA accounts on-chain, reset your state then update and relaunch.
+
+**Update Loop**
+
+If the updater seems stuck or broken, you can bypass it and run the miner directly:
+
+```sh
+npm run miner
+```
+
+## Disclaimer
+
+**Use at your own risk.**
+
+This software is experimental. The ORE protocol involves financial risk. The authors of this software are not responsible for any financial losses, lost private keys, or failed transactions. Always audit the code yourself before running it with significant funds.

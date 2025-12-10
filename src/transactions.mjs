@@ -197,7 +197,7 @@ export async function sendDeployTx(targets, connection, signer) {
       connection,
       transaction,
       [signer]
-      // { commitment: 'confirmed' } 
+      // { commitment: 'confirmed' }
     );
 
     log(`deploy successful! signature: ${signature.slice(0, 16)}...`);
@@ -287,13 +287,13 @@ export async function sendClaimSolTx(connection, signer) {
     return true; // Success
   } catch (e) {
     const errorMsg = e.message || e.logs?.join(' ') || '';
-    
+
     // Check for common non-fatal "nothing to claim" errors
     if (errorMsg.includes('custom program error')) {
       log('claim SOL: no pending rewards to claim.');
       return true; // Not a failure, just nothing to do.
     }
-    
+
     // Real error
     log(`claim SOL FAILED: ${errorMsg}`);
     return false; // Return false on real error
@@ -330,10 +330,10 @@ export async function executeFullCashOut(targetAddress, connection, signer) {
     log('cash out ABORTED: claim SOL failed. See log.');
     return;
   }
-  
+
   // Wait a moment for the RPC to reflect the balance change
   log('waiting for balance to update...');
-  await new Promise(resolve => setTimeout(resolve, 2000)); 
+  await new Promise(resolve => setTimeout(resolve, 2000));
 
   // --- Step 2: Fetch NEW total balance ---
   let newBalance = 0;
@@ -346,7 +346,7 @@ export async function executeFullCashOut(targetAddress, connection, signer) {
     log(`cash out FAILED: could not fetch new balance: ${e.message}`);
     return; // Abort
   }
-  
+
   // --- Step 3: Send Entire Balance ---
   const FEE_BUFFER = 5000; // Standard transfer fee
   const amountToSend = newBalance - FEE_BUFFER;
@@ -374,7 +374,7 @@ export async function executeFullCashOut(targetAddress, connection, signer) {
     );
 
     log(`CASH OUT SUCCESSFUL: ${signature.slice(0, 16)}...`);
-    
+
     // Refresh balance one last time
     const finalBalance = await connection.getBalance(authority);
     setAppState({ userBalance: finalBalance / LAMPORTS_PER_SOL });

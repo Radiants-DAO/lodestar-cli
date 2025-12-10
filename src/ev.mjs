@@ -69,7 +69,7 @@ export function computeEVStarForBlock(O, T, oreValueInSOL) {
  */
 export function getOreValueInSOL(roundData) {
   const { priceOreSol } = getState();
-  
+
   // Adjust motherlode units
   const M = Number(roundData.motherlode.toString()) * (1 / 10 ** 11);
 

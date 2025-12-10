@@ -62,7 +62,7 @@ async function getOrEstimateSlot() {
   // Solana slots are ~400ms target
   const timeDiff = now - lastSyncedTime;
   const slotsPassed = Math.floor(timeDiff / MS_PER_SLOT);
-  
+
   return lastSyncedSlot + slotsPassed;
 }
 
@@ -235,7 +235,7 @@ export async function updateCountdown() {
   const now = Date.now();
   if (now - lastBoardUpdate > 60000) {
     log('warning: board data stale (>60s), force fetching...');
-    
+
     // Reset the timer immediately to prevent spamming fetches
     setAppState({ lastBoardUpdate: now });
 
@@ -246,7 +246,7 @@ export async function updateCountdown() {
         log('stale check: board updated successfully');
         await processBoardUpdate(accountInfo);
         // processBoardUpdate will update state, so we return to let the next tick handle the UI
-        return; 
+        return;
       }
     } catch (e) {
       log(`stale check failed: ${e.message}`);

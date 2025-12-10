@@ -51,17 +51,17 @@ export async function loadSigner(connection) {
   }
 
   const pubkeyStr = signerKeypair.publicKey.toBase58();
-  
+
   // 3. Check Balance
   log(`checking balance for wallet: ${pubkeyStr.slice(0,4)}...${pubkeyStr.slice(-4)}`);
-  
+
   const balanceLamports = await connection.getBalance(signerKeypair.publicKey);
   const balanceSol = balanceLamports / LAMPORTS_PER_SOL;
 
   // 4. Update State and Return
   setAppState({ userBalance: balanceSol });
   log(`wallet loaded. balance: ${balanceSol.toFixed(4)} SOL`);
-  
+
   return signerKeypair;
 }
 

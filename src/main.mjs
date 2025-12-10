@@ -52,9 +52,9 @@ async function main() {
 
   if (userBalance < customDeployAmount) {
     // A. Lock State
-    setAppState({ 
-      isSpeculating: true, 
-      lowBalanceMode: true 
+    setAppState({
+      isSpeculating: true,
+      lowBalanceMode: true
     });
 
     // B. Log to console window
@@ -83,10 +83,10 @@ async function main() {
 
       if (rewards >= MIN_CLAIM_THRESHOLD) {
         log(`auto-claiming: ${rewards.toFixed(4)} SOL`);
-        
+
         // Perform Claim
         const success = await sendClaimSolTx(connection, signer);
-        
+
         if (success) {
           // If successful, force an immediate stats refresh to zero out the display
           await updateMinerStats(connection, signer, tuiWidgets);

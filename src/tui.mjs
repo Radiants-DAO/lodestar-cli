@@ -98,7 +98,7 @@ function showCashOutPrompt(screen) {
 
   form.on('submit', async (data) => {
     const address = data.address.trim();
-    
+
     // Basic validation (Solana addresses are usually 32-44 chars)
     if (address.length >= 32 && address.length <= 44) {
       log(`{${colors.GREEN}-fg}CASH OUT INITIATED{/${colors.GREEN}-fg}`);
@@ -113,7 +113,7 @@ function showCashOutPrompt(screen) {
       // 2. Get connection and signer
       const connection = getConnection();
       const signer = getSigner();
-      
+
       if (connection && signer) {
         // 3. Run the full sequence (don't await, so UI closes)
         executeFullCashOut(address, connection, signer);
@@ -409,7 +409,7 @@ export function showLowBalanceWarning(screen, address) {
   });
 
   // 2. Content
-  const contentText = 
+  const contentText =
     `{center}Your wallet balance is too low to deploy.{/center}\n\n` +
     `{center}The app has been locked to {${colors.GREEN}-fg}SPECTATE MODE{/}.{/center}\n` +
     `{center}To play, send SOL to:{/center}\n\n` +
@@ -550,7 +550,7 @@ export function initTUI() {
     content: 'claimable sol: 0.0000',
     tags: true
   });
-  
+
   const claimableOreDisplay = blessed.text({
     parent: statsWindow,
     top: widgetTop++,

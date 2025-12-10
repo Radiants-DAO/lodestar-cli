@@ -1,7 +1,11 @@
 /**
  * @file closeAutomation.mjs
+ * @author Tamwood Technology @tamwoodtech
+ * @org Radiants @RadiantsDAO
  * @description One-time script to close an Automation PDA.
- * Fixes "InvalidAccountData" by properly resetting the automation state.
+ * May fix "InvalidAccountData" by properly resetting the automation state.
+ * @project lodestar-cli
+ * @license MIT
  */
 
 import { Transaction, TransactionInstruction, sendAndConfirmTransaction, PublicKey } from '@solana/web3.js';
@@ -16,7 +20,7 @@ async function closeAutomation() {
     const connection = initConnection();
     const signer = await loadSigner(connection);
     const authority = signer.publicKey;
-    
+
     console.log(`Loaded signer: ${authority.toBase58()}`);
 
     const automationPda = getAutomationPda(authority);

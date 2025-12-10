@@ -61,10 +61,10 @@ export async function updateMinerStats(connection, signer, tuiWidgets) {
 
       // 1. Parse Values (BigInt -> Number/String)
       const rewardsSol = Number(minerData.rewards_sol) * SOL_PER_LAMPORT;
-      
+
       // ORE uses 11 decimals
       const ORE_DIVISOR = 100_000_000_000;
-      
+
       const rewardsOre = Number(minerData.rewards_ore) / ORE_DIVISOR;
       const refinedOre = Number(minerData.refined_ore) / ORE_DIVISOR;
 
@@ -76,25 +76,25 @@ export async function updateMinerStats(connection, signer, tuiWidgets) {
       });
 
       // 3. Update TUI Widgets
-      const { 
-        botBalanceDisplay, 
-        claimableSolDisplay, 
-        claimableOreDisplay, 
-        refinedOreDisplay 
+      const {
+        botBalanceDisplay,
+        claimableSolDisplay,
+        claimableOreDisplay,
+        refinedOreDisplay
       } = tuiWidgets;
-      
+
       const { userBalance } = getState();
 
-      if (botBalanceDisplay) 
+      if (botBalanceDisplay)
         botBalanceDisplay.setContent(`   bot wallet: {${colors.GREEN}-fg}${userBalance.toFixed(4)}{/}`);
-      
-      if (claimableSolDisplay) 
+
+      if (claimableSolDisplay)
         claimableSolDisplay.setContent(`claimable sol: {${colors.YELLOW}-fg}${rewardsSol.toFixed(4)}{/}`);
-      
-      if (claimableOreDisplay) 
+
+      if (claimableOreDisplay)
         claimableOreDisplay.setContent(`unrefined ore: {${colors.YELLOW}-fg}${rewardsOre.toFixed(4)}{/}`);
-      
-      if (refinedOreDisplay) 
+
+      if (refinedOreDisplay)
         refinedOreDisplay.setContent(`  refined ore: {${colors.BLUE}-fg}${refinedOre.toFixed(4)}{/}`);
     }
   } catch (e) {

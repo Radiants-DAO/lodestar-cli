@@ -1,9 +1,12 @@
 {
   "name": "lodestar-cli",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "./src/main.mjs",
   "scripts": {
-    "start": "node ./src/main.mjs"
+    "start": "node update.mjs",
+    "update": "node update.mjs",
+    "miner": "node ./src/main.mjs",
+    "cleanup": "node ./src/closeAutomation.mjs"
   },
   "keywords": [],
   "author": "@tamwoodtech",
